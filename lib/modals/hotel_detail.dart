@@ -89,3 +89,50 @@ class HotelPhotos {
   String image;
   HotelPhotos(this.image);
 }
+
+class HotelBookingHistoryModel {
+  String bookingId;
+  String hotelId;
+  String name;
+  DateTime checkin;
+  DateTime checkout;
+  String roomtype;
+  int totalRooms;
+  int adults;
+  int kids;
+  bool paymentStatus;
+  double discount;
+  double totalCharge;
+  double roomCharge;
+  DateTime dateOfBooking;
+  HotelBookingHistoryModel(
+      this.bookingId,
+      this.hotelId,
+      this.name,
+      this.checkin,
+      this.checkout,
+      this.roomtype,
+      this.totalRooms,
+      this.adults,
+      this.kids,
+      this.paymentStatus,
+      this.discount,
+      this.totalCharge,
+      this.roomCharge,
+      this.dateOfBooking);
+  HotelBookingHistoryModel.fromJson(Map<String, dynamic> booking)
+      : bookingId = booking['_id'],
+        hotelId = booking['hotelId'],
+        name = booking['name'],
+        checkin = DateTime.parse(booking['checkin']),
+        checkout = DateTime.parse(booking['checkout']),
+        roomtype = booking['roomtype'],
+        totalRooms = booking['quantity'],
+        adults = booking['adults'],
+        kids = booking['children'],
+        paymentStatus = booking['status'],
+        discount = booking['discount'] + 0.0 ?? 0.0,
+        totalCharge = booking['charges'] + 0.0 ?? 0.0,
+        roomCharge = booking['roomPrice'] ?? 0.0,
+        dateOfBooking = DateTime.parse(booking['createdAt']);
+}

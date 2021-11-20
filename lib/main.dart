@@ -5,6 +5,7 @@ import 'package:justorderuser/backend/providers/restaurant_provider.dart';
 import 'package:justorderuser/screens/explore/hotels/hotel_details.dart';
 import 'package:justorderuser/screens/explore/hotels/hotel_rooms.dart';
 import 'package:justorderuser/screens/explore/restaurant/menu_details.dart';
+import 'package:justorderuser/screens/order_history/booking_history_details.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -38,6 +39,8 @@ class MyApp extends StatelessWidget {
           HotelDetailsScreen.hotelDetailRoute: (ctx) => HotelDetailsScreen(),
           HotelRooms.hotelRoomRoute: (ctx) => HotelRooms(),
           MenuDetails.menuDetailRoute: (ctx) => MenuDetails(),
+          BookingHistoryDetails.bookingHistoryRoute: (ctx) =>
+              BookingHistoryDetails(),
 
           // HotelReviewsScreen.hotelReviewsRoute: (ctx) => HotelReviewsScreen(),
         },

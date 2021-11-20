@@ -12,4 +12,14 @@ class ServiceProvider {
       return [];
     }
   }
+
+  static otherServiceSublist() async {
+    try {
+      var response = await HttpWrapper.sendGetRequest(url: SERVICE_SUBLISTS);
+      return response;
+    } catch (e) {
+      print(e);
+      return [];
+    }
+  }
 }

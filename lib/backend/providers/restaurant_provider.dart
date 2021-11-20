@@ -11,8 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ResaurantsDataProvider with ChangeNotifier {
-  List<Restaurant> _allRestaurants = [];
-  List<Restaurant> get restaurantsList => _allRestaurants;
+  List<Restaurant> allRestaurants = [];
 
   List restReviews = [];
 
@@ -26,8 +25,7 @@ class ResaurantsDataProvider with ChangeNotifier {
           await HttpWrapper.sendGetRequest(url: RESTAURANT_LISTS);
       if (restaurantData['success'] == true) {
         var response = restaurantData['restaurants'] as List;
-        var data = response.map((e) => Restaurant.fromJson(e)).toList();
-        _allRestaurants.addAll(data);
+        allRestaurants = response.map((e) => Restaurant.fromJson(e)).toList();
         notifyListeners();
 
         checkData();
@@ -39,10 +37,7 @@ class ResaurantsDataProvider with ChangeNotifier {
     }
   }
 
-  void checkData() {
-    print('Data Check :: $_allRestaurants');
-    print('Single Restaurant :: ${_allRestaurants[0].restaurantName}');
-  }
+  void checkData() {}
 
   loadMenuItems(String restId) async {
     try {
@@ -82,15 +77,14 @@ class ResaurantsDataProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> addtoCart(String restId) async {
+  static Future<bool> addtoCart(String restId) async {
     try {
       var checkCartItems = await HttpWrapper.sendGetRequest(url: GET_CART_ITEM);
       if (checkCartItems['success'] == true) {
-        print('Data Fatch Success');
         if ((checkCartItems['carts'] as List).length > 0) {
-          print('Length > 0');
           (checkCartItems['carts'] as List).firstWhere((element) {
             print('check Element Id :: ${element['resturantId']} and $restId');
+            //  return element['resturantId'] == restId ? true : false;
             if (element['resturantId'] == restId) {
               print('Id Match SuccessFull');
               return true;

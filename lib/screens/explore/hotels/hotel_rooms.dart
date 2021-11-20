@@ -17,8 +17,6 @@ class HotelRooms extends StatelessWidget {
         .hotelData
         .firstWhere((element) => element.id == hotelId);
 
-    print('Total Rooms :: ${roomsList.length}');
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -29,11 +27,25 @@ class HotelRooms extends StatelessWidget {
           padding: EdgeInsets.all(10),
           child: roomsList.isEmpty || roomsList == null
               ? Center(
-                  child: CircularProgressIndicator(),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/113.jpg',
+                        width: MediaQuery.of(context).size.width * 0.4,
+                      ),
+                      Text(
+                        'No Rooms Available !!',
+                        style: TextStyle(
+                            fontSize: 25, color: Colors.grey.shade400),
+                      )
+                    ],
+                  ),
                 )
               : ListView(
                   children: [
                     RoomsTiles(
+                        hotel.id,
                         hotel.hotelDetail.hotelName,
                         context,
                         roomsList[0].singleType.roomtype,
@@ -42,6 +54,7 @@ class HotelRooms extends StatelessWidget {
                         roomsList[0].singleType.adults,
                         roomsList[0].singleType.image),
                     RoomsTiles(
+                        hotel.id,
                         hotel.hotelDetail.hotelName,
                         context,
                         roomsList[0].doubleType.roomType,
@@ -50,6 +63,7 @@ class HotelRooms extends StatelessWidget {
                         roomsList[0].doubleType.adults,
                         roomsList[0].doubleType.image),
                     RoomsTiles(
+                        hotel.id,
                         hotel.hotelDetail.hotelName,
                         context,
                         roomsList[0].duplexType.roomtype,
@@ -58,6 +72,7 @@ class HotelRooms extends StatelessWidget {
                         roomsList[0].duplexType.adults,
                         roomsList[0].duplexType.image),
                     RoomsTiles(
+                        hotel.id,
                         hotel.hotelDetail.hotelName,
                         context,
                         roomsList[0].deluxeType.roomtype,
@@ -72,6 +87,7 @@ class HotelRooms extends StatelessWidget {
 }
 
 class RoomsTiles extends StatelessWidget {
+  final String hotelId;
   final String hotelName;
   final BuildContext context;
   final String roomType;
@@ -80,8 +96,8 @@ class RoomsTiles extends StatelessWidget {
   final int adults;
   final String image;
 
-  RoomsTiles(this.hotelName, this.context, this.roomType, this.price, this.kids,
-      this.adults, this.image);
+  RoomsTiles(this.hotelId, this.hotelName, this.context, this.roomType,
+      this.price, this.kids, this.adults, this.image);
 
   @override
   Widget build(BuildContext context) {
@@ -131,8 +147,8 @@ class RoomsTiles extends StatelessWidget {
                 trailing: InkWell(
                   onTap: () {
                     Navigator.of(context).push(MaterialPageRoute(
-                        builder: (ctx) =>
-                            BookingReview(image, hotelName, price, roomType)));
+                        builder: (ctx) => BookingReview(hotelId, image,
+                            hotelName, price, roomType, kids, adults)));
                   },
                   child: Chip(
                       backgroundColor: Colors.green, label: Text('Book Now')),

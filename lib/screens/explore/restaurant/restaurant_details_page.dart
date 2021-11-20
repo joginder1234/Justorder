@@ -25,7 +25,7 @@ class _RestaurantDetailsPageState extends State<RestaurantDetailsPage> {
   Widget build(BuildContext context) {
     // var restId = ModalRoute.of(context)?.settings.arguments;
     var restaurantDetails = Provider.of<ResaurantsDataProvider>(context)
-        .restaurantsList
+        .allRestaurants
         .firstWhere((element) => element.id == widget.restId);
 
     return Scaffold(
@@ -43,9 +43,12 @@ class _RestaurantDetailsPageState extends State<RestaurantDetailsPage> {
                         color: Colors.black,
                         height: MediaQuery.of(context).size.height * 0.45,
                         width: MediaQuery.of(context).size.width * 1.0,
-                        child: Image(
-                          fit: BoxFit.cover,
-                          image: NetworkImage(restaurantDetails.image),
+                        child: Hero(
+                          tag: restaurantDetails.id,
+                          child: Image(
+                            fit: BoxFit.cover,
+                            image: NetworkImage(restaurantDetails.image),
+                          ),
                         ),
                       ),
                       Padding(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:justorderuser/backend/common/http_wrapper.dart';
+import 'package:justorderuser/backend/providers/auth_provider.dart';
 import 'package:justorderuser/backend/providers/service.dart';
 import 'package:justorderuser/backend/urls/urls.dart';
 import 'package:justorderuser/common/custom_toast.dart';
@@ -115,9 +116,8 @@ class _ExploreState extends State<Explore> {
         var response = (hotelData['hotels'] as List);
 
         setState(() {
-          Provider.of<HotelDataProvider>(context, listen: false)
-              .hotelData
-              .addAll(response.map((e) => Hotel.fromJson(e)).toList());
+          Provider.of<HotelDataProvider>(context, listen: false).hotelData =
+              response.map((e) => Hotel.fromJson(e)).toList();
           loading = false;
         });
       } else {
@@ -140,8 +140,7 @@ class _ExploreState extends State<Explore> {
         var data = response.map((e) => Restaurant.fromJson(e)).toList();
         setState(() {
           Provider.of<ResaurantsDataProvider>(context, listen: false)
-              .restaurantsList
-              .addAll(data);
+              .allRestaurants = data;
         });
       } else {
         CustomToast.showToast(restaurantData['message']);

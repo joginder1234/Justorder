@@ -9,6 +9,7 @@ import 'package:justorderuser/backend/providers/restaurant_provider.dart';
 import 'package:justorderuser/backend/urls/urls.dart';
 import 'package:justorderuser/explore.dart';
 import 'package:justorderuser/modals/restaurant_details.dart';
+import 'package:justorderuser/screens/base_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -75,11 +76,12 @@ class _RestaurantCartState extends State<RestaurantCart> {
     });
     try {
       var cartData = await HttpWrapper.sendGetRequest(url: GET_CART_ITEM);
+      print("Cart Data :: $cartData");
       if (cartData['success'] == true) {
         var _restaurantDetails = (cartData['carts'] as List).length <= 0
             ? null
             : Provider.of<ResaurantsDataProvider>(context, listen: false)
-                .restaurantsList
+                .allRestaurants
                 .firstWhere((element) =>
                     element.id == cartData['carts'][0]['resturantId']);
         setState(() {
@@ -127,6 +129,14 @@ class _RestaurantCartState extends State<RestaurantCart> {
     }
   }
 
+  // sendOrder() async {
+  //   Map<String, dynamic> _order = {
+  //     'restaurantId': _cartItems[0]['resturantId'],
+  //     'cartId': _cartItems
+  //     'userId' :
+  //   };
+  // }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -139,7 +149,7 @@ class _RestaurantCartState extends State<RestaurantCart> {
           IconButton(
               onPressed: () {
                 Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => Explore()),
+                    MaterialPageRoute(builder: (_) => BaseWidget()),
                     (route) => false);
               },
               icon: Icon(
@@ -251,139 +261,142 @@ class _RestaurantCartState extends State<RestaurantCart> {
                           );
                         }),
           ),
-          Card(
-            elevation: 10,
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Cart Total',
-                        style: GoogleFonts.robotoCondensed(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        '\$' + getCartTotal().toString(),
-                        style: GoogleFonts.robotoCondensed(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Delivery Charge',
-                        style: GoogleFonts.robotoCondensed(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        '(+) \$$deliveryCharge',
-                        style: GoogleFonts.robotoCondensed(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Service Charge',
-                        style: GoogleFonts.robotoCondensed(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        '(+) \$$serviceCharge',
-                        style: GoogleFonts.robotoCondensed(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                  Divider(
-                    thickness: 1.5,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        width: 150,
-                        constraints:
-                            BoxConstraints(minWidth: 130, maxWidth: 170),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+          _cartItems.isEmpty
+              ? Container()
+              : Card(
+                  elevation: 10,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Grand Total',
+                              'Cart Total',
                               style: GoogleFonts.robotoCondensed(
                                   fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                             Text(
-                              '\$' +
-                                  (getCartTotal() +
-                                          deliveryCharge +
-                                          serviceCharge)
-                                      .toString(),
+                              '\$' + getCartTotal().toString(),
                               style: GoogleFonts.robotoCondensed(
-                                  fontSize: 23,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue),
+                                  fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
-                      ),
-                      Container(
-                          constraints:
-                              BoxConstraints(maxWidth: 200, minWidth: 150),
-                          width: MediaQuery.of(context).size.width * 0.4,
-                          child: !_isLoading
-                              ? ElevatedButton(
-                                  onPressed: () {
-                                    if (_cartItems.isEmpty) {
-                                      return;
-                                    } else {
-                                      emptyCart();
-                                      setState(() {
-                                        deliveryCharge = 0.0;
-                                      });
-                                    }
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 15),
-                                    child: Text(
-                                      'ORDER NOW',
-                                      style: GoogleFonts.robotoCondensed(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white),
-                                    ),
-                                  ))
-                              : ElevatedButton(
-                                  style: ButtonStyle(
-                                      backgroundColor:
-                                          MaterialStateProperty.all(
-                                              Colors.grey)),
-                                  onPressed: null,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 15),
-                                    child: Text(
-                                      'ORDER NOW',
-                                      style: GoogleFonts.robotoCondensed(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white),
-                                    ),
-                                  )))
-                    ],
-                  )
-                ],
-              ),
-            ),
-          )
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Delivery Charge',
+                              style: GoogleFonts.robotoCondensed(
+                                  fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              '(+) \$$deliveryCharge',
+                              style: GoogleFonts.robotoCondensed(
+                                  fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Service Charge',
+                              style: GoogleFonts.robotoCondensed(
+                                  fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              '(+) \$$serviceCharge',
+                              style: GoogleFonts.robotoCondensed(
+                                  fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                        Divider(
+                          thickness: 1.5,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(
+                              width: 150,
+                              constraints:
+                                  BoxConstraints(minWidth: 130, maxWidth: 170),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Grand Total',
+                                    style: GoogleFonts.robotoCondensed(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  Text(
+                                    '\$' +
+                                        (getCartTotal() +
+                                                deliveryCharge +
+                                                serviceCharge)
+                                            .toString(),
+                                    style: GoogleFonts.robotoCondensed(
+                                        fontSize: 23,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.blue),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                                constraints: BoxConstraints(
+                                    maxWidth: 200, minWidth: 150),
+                                width: MediaQuery.of(context).size.width * 0.4,
+                                child: !_isLoading
+                                    ? ElevatedButton(
+                                        onPressed: () {
+                                          if (_cartItems.isEmpty) {
+                                            return;
+                                          } else {
+                                            emptyCart();
+                                            setState(() {
+                                              deliveryCharge = 0.0;
+                                            });
+                                          }
+                                        },
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 15),
+                                          child: Text(
+                                            'ORDER NOW',
+                                            style: GoogleFonts.robotoCondensed(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white),
+                                          ),
+                                        ))
+                                    : ElevatedButton(
+                                        style: ButtonStyle(
+                                            backgroundColor:
+                                                MaterialStateProperty.all(
+                                                    Colors.grey)),
+                                        onPressed: null,
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 15),
+                                          child: Text(
+                                            'ORDER NOW',
+                                            style: GoogleFonts.robotoCondensed(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white),
+                                          ),
+                                        )))
+                          ],
+                        )
+                      ],
+                    ),
+                  ),
+                )
         ],
       ),
     );

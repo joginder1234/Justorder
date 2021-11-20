@@ -2,20 +2,53 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:justorderuser/backend/common/http_wrapper.dart';
+import 'package:justorderuser/backend/urls/urls.dart';
+import 'package:justorderuser/common/custom_toast.dart';
+import 'package:justorderuser/screens/base_widget.dart';
 import 'package:justorderuser/screens/explore/booking/add_card.dart';
 
 class BookingReview extends StatefulWidget {
+  final String hoteId;
   final String imageUrl;
   final String hotelName;
   final double price;
   final String roomType;
-  BookingReview(this.imageUrl, this.hotelName, this.price, this.roomType);
+  final int kids;
+  final int adults;
+  BookingReview(this.hoteId, this.imageUrl, this.hotelName, this.price,
+      this.roomType, this.kids, this.adults);
 
   @override
   _BookingReviewState createState() => _BookingReviewState();
 }
 
 class _BookingReviewState extends State<BookingReview> {
+  Map<String, dynamic> currentUser = {};
+  @override
+  void initState() {
+    super.initState();
+
+    loadUserDetails();
+  }
+
+  loadUserDetails() async {
+    try {
+      HttpWrapper.sendGetRequest(url: CURRENT_USER_DETAILS).then((value) {
+        print(value['user']);
+        Map<String, dynamic> user = {
+          'name': '${value['user']['firstName']} ${value['user']['lastName']}',
+          'userId': value['user']['_id']
+        };
+        setState(() {
+          currentUser = user;
+        });
+      });
+    } catch (e) {
+      print(e);
+    }
+  }
+
   DateTime checkinDate = DateTime.now();
   DateTime checkoutDate = DateTime.now().add(Duration(days: 1));
   int rooms = 1;
@@ -23,14 +56,43 @@ class _BookingReviewState extends State<BookingReview> {
   int children = 0;
   bool _isCouponApplied = false;
 
-  increaseRooms() {
-    setState(() {
-      rooms++;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    double adultRatio = adults / widget.adults;
+    double childRatio = children / widget.kids;
+    rooms = adults > widget.adults && children < widget.kids
+        ? adultRatio.ceil()
+        : adults < widget.adults && children > widget.kids
+            ? childRatio.ceil()
+            : adults > widget.adults && children > widget.kids
+                ? (adultRatio.floor() + childRatio.floor() + 1)
+                : adults == widget.adults || children == widget.kids
+                    ? adultRatio.ceil() + childRatio.ceil()
+                    : adults == widget.adults && children < widget.kids
+                        ? 2
+                        : adults == widget.adults && children > widget.kids
+                            ? 1 + childRatio.ceil()
+                            : adults > widget.adults && children == widget.kids
+                                ? 1 + adultRatio.ceil()
+                                : adults < widget.adults &&
+                                        children == widget.kids
+                                    ? 2
+                                    : adults < widget.adults / 2.ceil() &&
+                                            children < widget.kids / 2.ceil()
+                                        ? 1
+                                        : adults > widget.adults / 2.ceil() &&
+                                                children >
+                                                    widget.kids / 2.ceil()
+                                            ? 2
+                                            : 1;
+    double total = (widget.price *
+        ((checkoutDate
+                .difference(checkinDate.isBefore(checkoutDate)
+                    ? checkinDate
+                    : checkoutDate)
+                .inDays) +
+            (checkinDate == checkoutDate ? 0 : 1)) *
+        rooms);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -179,27 +241,29 @@ class _BookingReviewState extends State<BookingReview> {
                         'Number of Rooms',
                         style: TextStyle(fontSize: 18),
                       ),
-                      Chip(
-                          backgroundColor: Colors.grey.shade200,
-                          labelPadding: EdgeInsets.all(0),
-                          label: Row(
-                            children: [
-                              roundButton(Icons.remove),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 10),
-                                child: Text(
-                                  '$rooms',
-                                  style: TextStyle(fontSize: 18),
-                                ),
-                              ),
-                              GestureDetector(
-                                  onTap: () {
-                                    increaseRooms();
-                                  },
-                                  child: roundButton(Icons.add)),
-                            ],
-                          )),
+                      Row(
+                        children: [
+                          IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  if (rooms < 2) {
+                                  } else {
+                                    rooms--;
+                                  }
+                                });
+                              },
+                              icon: Icon(Icons.remove)),
+                          Text(rooms.toString(),
+                              style: TextStyle(fontSize: 18)),
+                          IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  rooms++;
+                                });
+                              },
+                              icon: Icon(Icons.add)),
+                        ],
+                      )
                     ],
                   ),
                   Row(
@@ -209,23 +273,29 @@ class _BookingReviewState extends State<BookingReview> {
                         'Adults',
                         style: TextStyle(fontSize: 18),
                       ),
-                      Chip(
-                          backgroundColor: Colors.grey.shade200,
-                          labelPadding: EdgeInsets.all(0),
-                          label: Row(
-                            children: [
-                              roundButton(Icons.remove),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 10),
-                                child: Text(
-                                  '0',
-                                  style: TextStyle(fontSize: 18),
-                                ),
-                              ),
-                              roundButton(Icons.add),
-                            ],
-                          )),
+                      Row(
+                        children: [
+                          IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  if (adults < 2) {
+                                  } else {
+                                    adults--;
+                                  }
+                                });
+                              },
+                              icon: Icon(Icons.remove)),
+                          Text(adults.toString(),
+                              style: TextStyle(fontSize: 18)),
+                          IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  adults++;
+                                });
+                              },
+                              icon: Icon(Icons.add)),
+                        ],
+                      )
                     ],
                   ),
                   Row(
@@ -235,23 +305,29 @@ class _BookingReviewState extends State<BookingReview> {
                         'Children',
                         style: TextStyle(fontSize: 18),
                       ),
-                      Chip(
-                          backgroundColor: Colors.grey.shade200,
-                          labelPadding: EdgeInsets.all(0),
-                          label: Row(
-                            children: [
-                              roundButton(Icons.remove),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 10),
-                                child: Text(
-                                  '0',
-                                  style: TextStyle(fontSize: 18),
-                                ),
-                              ),
-                              roundButton(Icons.add),
-                            ],
-                          )),
+                      Row(
+                        children: [
+                          IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  if (children < 1) {
+                                  } else {
+                                    children--;
+                                  }
+                                });
+                              },
+                              icon: Icon(Icons.remove)),
+                          Text(children.toString(),
+                              style: TextStyle(fontSize: 18)),
+                          IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  children++;
+                                });
+                              },
+                              icon: Icon(Icons.add)),
+                        ],
+                      )
                     ],
                   )
                 ],
@@ -290,11 +366,11 @@ class _BookingReviewState extends State<BookingReview> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '\$${widget.price} x ${(checkoutDate.difference(checkinDate.isBefore(checkoutDate) ? checkinDate : checkoutDate).inDays)} nights',
+                        '\$${widget.price} x ${(checkoutDate.difference(checkinDate.isBefore(checkoutDate) ? checkinDate : checkoutDate).inDays) + (checkinDate == checkoutDate ? 0 : 1)} nights x $rooms rooms',
                         style: GoogleFonts.robotoCondensed(fontSize: 20),
                       ),
                       Text(
-                        '\$${widget.price * (checkoutDate.difference(checkinDate.isBefore(checkoutDate) ? checkinDate : checkoutDate).inDays + (checkinDate == checkoutDate ? 1 : 0))}',
+                        '\$$total',
                         style: GoogleFonts.robotoCondensed(fontSize: 20),
                       )
                     ],
@@ -318,8 +394,7 @@ class _BookingReviewState extends State<BookingReview> {
                                 Text('Applied Coupon\n10% Off')
                               ],
                             ),
-                            Text(
-                                '(-) \$${widget.price * (checkoutDate.difference(checkinDate.isBefore(checkoutDate) ? checkinDate : checkoutDate).inDays + (checkinDate == checkoutDate ? 1 : 0)) * 10 / 100}',
+                            Text('(-) \$${total * 10 / 100}',
                                 style:
                                     GoogleFonts.robotoCondensed(fontSize: 20))
                           ],
@@ -344,7 +419,7 @@ class _BookingReviewState extends State<BookingReview> {
                       style: GoogleFonts.robotoCondensed(
                           fontSize: 25, fontWeight: FontWeight.w600)),
                   Text(
-                      '\$${(widget.price * (checkoutDate.difference(checkinDate.isBefore(checkoutDate) ? checkinDate : checkoutDate).inDays + (checkinDate == checkoutDate ? 1 : 0)) - (_isCouponApplied ? widget.price * (checkoutDate.difference(checkinDate.isBefore(checkoutDate) ? checkinDate : checkoutDate).inDays + (checkinDate == checkoutDate ? 1 : 0)) * 10 / 100 : 0))}',
+                      '${total - (_isCouponApplied ? total * 10 / 100 : 0.00)}',
                       style: GoogleFonts.robotoCondensed(
                           fontSize: 25, fontWeight: FontWeight.w600)),
                 ],
@@ -358,8 +433,10 @@ class _BookingReviewState extends State<BookingReview> {
                     style: ButtonStyle(
                         padding: MaterialStateProperty.all(
                             EdgeInsets.symmetric(vertical: 15))),
-                    onPressed: () {},
-                    child: Text('Confirm Booking',
+                    onPressed: () {
+                      createOrder(total, true);
+                    },
+                    child: Text('Confirm and Pay',
                         style: GoogleFonts.robotoCondensed(
                             fontSize: 18, fontWeight: FontWeight.w600))),
               )
@@ -397,5 +474,36 @@ class _BookingReviewState extends State<BookingReview> {
             )
           ],
         ));
+  }
+
+  createOrder(double total, bool status) async {
+    Map<String, dynamic> order = {
+      'hotelName': widget.hotelName,
+      'hotelId': widget.hoteId,
+      'name': currentUser['name'],
+      'userId': currentUser['userId'],
+      'checkin': checkinDate.toString(),
+      'checkout': checkoutDate.toString(),
+      'roomtype': widget.roomType,
+      'quantity': rooms.toString(),
+      'adults': adults.toString(),
+      'paymentStatus': status.toString(),
+      'children': children.toString(),
+      'discount': (_isCouponApplied ? total * 10 / 100 : 0.00).toString(),
+      'charges':
+          (total - (_isCouponApplied ? total * 10 / 100 : 0.00)).toString(),
+    };
+
+    try {
+      await HttpWrapper.sendPostRequest(url: ADD_HOTEL_BOOKING, body: order)
+          .then((value) {
+        print('New Booking :: $value');
+        CustomToast.showToast(value['message']);
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => BaseWidget()), (route) => false);
+      });
+    } catch (e) {
+      print(e);
+    }
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:justorderuser/backend/providers/auth_provider.dart';
 import 'package:justorderuser/common/custom_toast.dart';
 import 'package:justorderuser/common/get_started.dart';
+import 'package:justorderuser/screens/order_history/hotel_booking_history.dart';
 import 'package:justorderuser/screens/profile/change_password.dart';
 import 'package:justorderuser/screens/profile/edit_profile.dart';
 import 'package:justorderuser/screens/profile/payment.dart';
@@ -84,6 +85,26 @@ class _ProfileState extends State<Profile> {
                 trailing: Icon(Icons.settings),
                 onTap: () => Navigator.push(
                     context, MaterialPageRoute(builder: (_) => Settings()))),
+            const Divider(
+              thickness: 1,
+            ),
+            ListTile(
+                title: Text("Hotel Bookings"),
+                trailing: Icon(Icons.navigate_next),
+                onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => HotelBookingHistory()))),
+            ListTile(
+              title: Text("Restaurant Orders"),
+              trailing: Icon(Icons.navigate_next),
+              // onTap: () => Navigator.push(
+              //     context, MaterialPageRoute(builder: (_) => Settings()))
+            ),
+            const Divider(
+              thickness: 1,
+            ),
+            const SizedBox(
+              height: 40,
+            ),
             ListTile(
               title: Text("Log Out"),
               trailing: Icon(Icons.logout),

@@ -58,17 +58,16 @@ class _RestaurantMenuPageState extends State<RestaurantMenuPage> {
           .filterMenu
           .clear();
     });
-    Provider.of<ResaurantsDataProvider>(context, listen: false)
+    var filterData = Provider.of<ResaurantsDataProvider>(context, listen: false)
         .menuList
-        .forEach((element) {
-      if (element['categoryId'] == id) {
-        setState(() {
-          Provider.of<ResaurantsDataProvider>(context, listen: false)
-              .filterMenu
-              .add(element);
-          filterCategory = id;
-        });
-      }
+        .where((element) => element['categoryId'] == id)
+        .toList();
+
+    setState(() {
+      Provider.of<ResaurantsDataProvider>(context, listen: false).filterMenu =
+          filterData;
+
+      filterCategory = id;
     });
   }
 
@@ -82,8 +81,7 @@ class _RestaurantMenuPageState extends State<RestaurantMenuPage> {
           url: RESTAURANT_MENU + '/${_prefs.getString('restId')}');
 
       if (allMenu['success'] == true) {
-        debugPrint(
-            'Final List :: ${(allMenu['menus'] as List).map((e) => e['options']).toList()}');
+        print('All Menu :: $allMenu');
         setState(() {
           Provider.of<ResaurantsDataProvider>(context, listen: false).menuList =
               allMenu['menus'];
@@ -110,9 +108,7 @@ class _RestaurantMenuPageState extends State<RestaurantMenuPage> {
     var _category = Provider.of<ResaurantsDataProvider>(context).category;
     var _filterMenu = Provider.of<ResaurantsDataProvider>(context).filterMenu;
     var _menuList = Provider.of<ResaurantsDataProvider>(context).menuList;
-    // var restaurantDetails = Provider.of<ResaurantsDataProvider>(context)
-    //     .restaurantsList
-    //     .firstWhere((element) => element.id == );
+    print('Filter Menu List :: ${_filterMenu.map((e) => e).toList()}');
 
     String menuImage =
         'https://media.istockphoto.com/photos/hamburger-with-cheese-and-french-fries-picture-id1188412964?k=20&m=1188412964&s=612x612&w=0&h=Ow-uMeygg90_1sxoCz-vh60SQDssmjP06uGXcZ2MzPY=';
@@ -241,11 +237,9 @@ class _RestaurantMenuPageState extends State<RestaurantMenuPage> {
                                 _menuList[index]['imageUrl'],
                                 _menuList[index]['name'] ?? '',
                                 _menuList[index]['description'],
-                                (_menuList[index]['options'] as List).length <=
-                                        0
+                                _menuList[index]['price'] == null
                                     ? 0.0
-                                    : double.parse(
-                                        _menuList[index]['price'].toString()),
+                                    : _menuList[index]['price'] + 0.0,
                               ),
                             )
                           : ListView.builder(
@@ -300,6 +294,7 @@ class _MenuTilesState extends State<MenuTiles> {
   int _quantity = 1;
   String radioValue = '';
   List<String> _itemSize = ['Small', 'Medium', 'Large'];
+
   bool _isLoading = false;
 
   loadOptions(String optId) async {
@@ -331,17 +326,19 @@ class _MenuTilesState extends State<MenuTiles> {
     });
     try {
       Map<String, dynamic> _thisData = {
-        'resturantId': restId,
-        'userId': _prefs.getString('CurrentUserId'),
-        'menuId': menuId,
-        'name': name,
-        'price': price,
-        'quantity': qnty,
+        'resturantId': restId == null ? '' : restId,
+        'userId': _prefs.getString('CurrentUserId') ?? '',
+        'menuId': menuId == null ? '' : menuId,
+        'name': name == null ? '' : name,
+        'price': price == null ? '' : price,
+        'quantity': qnty == null ? '' : qnty,
       };
-      var cartResponse = await ResaurantsDataProvider().addtoCart(restId);
-      if (cartResponse) {
+      var cartResponse = await ResaurantsDataProvider.addtoCart(restId);
+      print(cartResponse);
+      if (!cartResponse) {
         var ATCResponst = await HttpWrapper.sendPostRequest(
             url: ADD_TO_CART, body: _thisData);
+        print(ATCResponst);
         if (ATCResponst['success'] == true) {
           CustomToast.showToast('Item Added to Cart');
           Navigator.of(context).pop();
@@ -375,195 +372,201 @@ class _MenuTilesState extends State<MenuTiles> {
               enableDrag: true,
               context: context,
               builder: (ctx) {
-                return Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.symmetric(vertical: 20),
-                        child: Container(
-                            height: 150,
-                            width: 150,
-                            decoration: BoxDecoration(shape: BoxShape.circle),
-                            child: ClipRRect(
-                                borderRadius: BorderRadius.circular(1000),
-                                child: Image(
-                                  image: NetworkImage(widget.image),
-                                  fit: BoxFit.cover,
-                                ))),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            widget.title,
-                            style: TextStyle(
-                                fontSize: 25, fontWeight: FontWeight.bold),
-                          ),
-                          SizedBox(height: 10),
-                          Text('\$${widget.price + 0.0}',
-                              style: TextStyle(
-                                  fontSize: 25,
-                                  color: Colors.orange.shade800,
-                                  fontWeight: FontWeight.w800)),
-                        ],
-                      ),
-                      const SizedBox(
-                        height: 20,
-                      ),
-                      SizedBox(
-                        width: double.infinity,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                return StatefulBuilder(builder: (BuildContext ctx, setState) {
+                  return Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: Container(
+                              height: 150,
+                              width: 150,
+                              decoration: BoxDecoration(shape: BoxShape.circle),
+                              child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(1000),
+                                  child: Image(
+                                    image: NetworkImage(widget.image),
+                                    fit: BoxFit.cover,
+                                  ))),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Text(
-                              'Description:',
+                              widget.title,
                               style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
+                                  fontSize: 25, fontWeight: FontWeight.bold),
                             ),
-                            const SizedBox(
-                              height: 5,
+                            SizedBox(height: 10),
+                            Text('\$${widget.price + 0.0}',
+                                style: TextStyle(
+                                    fontSize: 25,
+                                    color: Colors.orange.shade800,
+                                    fontWeight: FontWeight.w800)),
+                          ],
+                        ),
+                        const SizedBox(
+                          height: 20,
+                        ),
+                        SizedBox(
+                          width: double.infinity,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Description:',
+                                style: TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(
+                                height: 5,
+                              ),
+                              Text(
+                                widget.description,
+                                style:
+                                    TextStyle(color: Colors.grey, fontSize: 16),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        Card(
+                          child: RadioGroup<String>.builder(
+                              direction: Axis.horizontal,
+                              groupValue: radioValue,
+                              onChanged: (value) {
+                                setState(() {
+                                  radioValue = value.toString();
+                                });
+                              },
+                              items: _itemSize,
+                              itemBuilder: (i) {
+                                return RadioButtonBuilder(i.toString(),
+                                    textPosition: RadioButtonTextPosition.left);
+                              }),
+                        ),
+                        SizedBox(
+                          height: 30,
+                        ),
+                        Row(
+                          children: [
+                            Text(
+                              'Quantity',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w800, fontSize: 17),
+                            ),
+                            SizedBox(
+                              width: 20,
+                            ),
+                            Container(
+                                width: 30,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.grey,
+                                ),
+                                child: FloatingActionButton(
+                                  child: Icon(
+                                    Icons.remove,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () {
+                                    if (_quantity > 1) {
+                                      setState(() {
+                                        _quantity--;
+                                      });
+                                    }
+                                  },
+                                )),
+                            Text(
+                              '  $_quantity  ',
+                              style: TextStyle(fontSize: 17),
+                            ),
+                            Container(
+                                width: 30,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.orange,
+                                ),
+                                child: FloatingActionButton(
+                                  child: Icon(
+                                    Icons.add,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _quantity++;
+                                    });
+                                  },
+                                ))
+                          ],
+                        ),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        Row(
+                          children: [
+                            Text(
+                              'Total Price',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w800, fontSize: 17),
+                            ),
+                            SizedBox(
+                              width: 20,
                             ),
                             Text(
-                              widget.description,
-                              style:
-                                  TextStyle(color: Colors.grey, fontSize: 16),
+                              '\$${_quantity * (widget.price + 0.0)}',
+                              style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.orange),
                             ),
                           ],
                         ),
-                      ),
-                      SizedBox(
-                        height: 20,
-                      ),
-                      Card(
-                        child: RadioGroup<String>.builder(
-                            direction: Axis.horizontal,
-                            groupValue: radioValue,
-                            onChanged: (value) {
-                              setState(() {
-                                radioValue = value.toString();
-                              });
-                            },
-                            items: _itemSize,
-                            itemBuilder: (i) {
-                              return RadioButtonBuilder(i.toString(),
-                                  textPosition: RadioButtonTextPosition.left);
-                            }),
-                      ),
-                      SizedBox(
-                        height: 30,
-                      ),
-                      Row(
-                        children: [
-                          Text(
-                            'Quantity',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w800, fontSize: 17),
-                          ),
-                          SizedBox(
-                            width: 20,
-                          ),
-                          Container(
-                              width: 30,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.grey,
-                              ),
-                              child: FloatingActionButton(
-                                child: Icon(
-                                  Icons.remove,
-                                  color: Colors.white,
+                        SizedBox(
+                          height: 40,
+                        ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton(
+                                style: TextButton.styleFrom(
+                                  backgroundColor: Colors.blue,
                                 ),
                                 onPressed: () {
-                                  if (_quantity > 1) {
-                                    setState(() {
-                                      _quantity--;
-                                    });
-                                  }
+                                  // Navigator.of(context).push(MaterialPageRoute(
+                                  //     builder: (_) => Restaurantcart()));
+                                  print('Button is working');
+                                  addItemToCart(
+                                      widget.restId,
+                                      widget.id,
+                                      widget.title,
+                                      widget.price.toString(),
+                                      '2');
                                 },
-                              )),
-                          Text(
-                            '  $_quantity  ',
-                            style: TextStyle(fontSize: 17),
-                          ),
-                          Container(
-                              width: 30,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.orange,
-                              ),
-                              child: FloatingActionButton(
-                                child: Icon(
-                                  Icons.add,
-                                  color: Colors.white,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _quantity++;
-                                  });
-                                },
-                              ))
-                        ],
-                      ),
-                      SizedBox(
-                        height: 20,
-                      ),
-                      Row(
-                        children: [
-                          Text(
-                            'Total Price',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w800, fontSize: 17),
-                          ),
-                          SizedBox(
-                            width: 20,
-                          ),
-                          Text(
-                            '\$${_quantity * (widget.price + 0.0)}',
-                            style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.orange),
-                          ),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 40,
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              style: TextButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                              ),
-                              onPressed: () {
-                                // Navigator.of(context).push(MaterialPageRoute(
-                                //     builder: (_) => Restaurantcart()));
-                                print('Button is working');
-                                addItemToCart(widget.restId, widget.id,
-                                    widget.title, widget.price.toString(), '2');
-                              },
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 10),
-                                child: const Text(
-                                  'Add TO Cart',
-                                  style: TextStyle(
-                                      fontSize: 18, color: Colors.white),
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 10),
+                                  child: const Text(
+                                    'Add TO Cart',
+                                    style: TextStyle(
+                                        fontSize: 18, color: Colors.white),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                });
               });
           // Navigator.of(context)
           //     .pushNamed(MenuDetails.menuDetailRoute, arguments: widget.id);

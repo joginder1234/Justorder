@@ -12,13 +12,15 @@ class HotelDataProvider with ChangeNotifier {
 
   List reviewsList = [];
 
+  List<HotelBookingHistoryModel> hotelBookings = [];
+
   getHotelsList() async {
     try {
       var hotelData = await HttpWrapper.sendGetRequest(url: HOTEL_LISTS);
       if (hotelData['success'] == true) {
-        (hotelData['hotels'] as List).forEach((element) {
-          setHotelData(Hotel.fromJson(element));
-        });
+        hotelData = (hotelData['hotels'] as List)
+            .map((e) => Hotel.fromJson(e))
+            .toList();
       } else {
         CustomToast.showToast(hotelData['message']);
       }

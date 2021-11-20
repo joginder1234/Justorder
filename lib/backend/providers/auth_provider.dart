@@ -4,6 +4,18 @@ import 'package:justorderuser/common/custom_toast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthProvider {
+  static getCurrentUser() async {
+    try {
+      var data = await HttpWrapper.sendGetRequest(url: CURRENT_USER_DETAILS);
+      if (data['success'] == true) {
+        return data['user'];
+      }
+    } catch (e) {
+      print(e);
+      return null;
+    }
+  }
+
   static Future setToken(String token) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();

@@ -9,7 +9,7 @@ class RoomsData {
       this.duplexType, this.deluxeType);
 
   RoomsData.fromJson(Map<String, dynamic> allRooms)
-      : hotelId = allRooms['hotel'],
+      : hotelId = allRooms['hotelId'],
         roomId = allRooms['_id'],
         singleType = SingleType.fromJson(allRooms['single']),
         doubleType = DoubleType.fromJson(allRooms['double']),

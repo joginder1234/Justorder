@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:justorderuser/backend/providers/auth_provider.dart';
 import 'package:justorderuser/screens/auth/signup.dart';
 import 'package:justorderuser/screens/base_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'constants.dart';
 
 class LoginScreen extends StatefulWidget {

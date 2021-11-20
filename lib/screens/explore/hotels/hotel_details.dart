@@ -369,10 +369,6 @@ class _HotelDetailsState extends State<HotelDetailsScreen> {
                 .setRoomsData(RoomsData.fromJson(element));
           });
         });
-        // setState(() {
-        //   Provider.of<HotelDataProvider>(context, listen: false)
-        //       .setRoomsData(RoomsData.fromJson(RoomsData['room']));
-        // });
       } else {
         CustomToast.showToast(hotelRoomsData['message']);
       }

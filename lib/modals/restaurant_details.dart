@@ -92,3 +92,5 @@ class Timing {
         from = _timing['from'],
         to = _timing['to'];
 }
+
+class Name {}

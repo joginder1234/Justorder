@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:justorderuser/backend/common/http_wrapper.dart';
 import 'package:justorderuser/backend/providers/auth_provider.dart';
 import 'package:justorderuser/screens/base_widget.dart';
 

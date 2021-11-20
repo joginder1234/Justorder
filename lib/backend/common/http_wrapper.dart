@@ -18,7 +18,6 @@ class HttpWrapper {
       http.Response response =
           await http.get(Uri.parse(url), headers: !exemptHeader ? headers : {});
       var responseData = json.decode(response.body);
-      print(responseData);
       return responseData;
     } catch (e) {
       log(e.toString());

@@ -64,11 +64,7 @@ class _RestaurantTileState extends State<RestaurantTile> {
         setState(() {
           _prefs.setString('restId', widget.restId);
         });
-        // getallReviews(widget.hotelId);
         print('Restaurant Id :: ${widget.restId}');
-        // ResaurantsDataProvider().loadMenuCategory(widget.restId);
-        // ResaurantsDataProvider().getallReviews(widget.restId);
-        // ResaurantsDataProvider().loadMenuItems(widget.restId);
         Navigator.of(context)
             .push(MaterialPageRoute(builder: (_) => RestaurantViewBar()));
       },
