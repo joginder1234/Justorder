@@ -32,30 +32,6 @@ class RestaurantTile extends StatefulWidget {
 class _RestaurantTileState extends State<RestaurantTile> {
   bool _isFavorite = false;
 
-  // getallReviews(String hotelId) async {
-  //   try {
-  //     var reviews =
-  //         await HttpWrapper.sendGetRequest(url: HOTEL_REVIEWS + '/$hotelId');
-
-  //     print(reviews);
-
-  //     print('API : ${HOTEL_REVIEWS + '/$hotelId'}');
-  //     print('Hotel Id : $hotelId');
-  //     print((reviews['reviews'] as List).map((e) => e['hotelId']));
-
-  //     if (reviews['success'] == true) {
-  //       setState(() {
-  //         Provider.of<HotelDataProvider>(context, listen: false)
-  //             .setreviewList((reviews['reviews']));
-  //       });
-  //     } else {
-  //       CustomToast.showToast(reviews['message']);
-  //     }
-  //   } catch (e) {
-  //     print('function Error : $e');
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -155,24 +131,24 @@ class _RestaurantTileState extends State<RestaurantTile> {
                 ),
               ],
             ),
-            // Positioned(
-            //     top: 5,
-            //     right: 5,
-            //     child: _isFavorite
-            //         ? fvtIconBtn(
-            //             Icon(
-            //               Icons.favorite,
-            //               size: 20,
-            //               color: Colors.red,
-            //             ),
-            //             false)
-            //         : fvtIconBtn(
-            //             Icon(
-            //               Icons.favorite_border,
-            //               size: 20,
-            //               color: Colors.red,
-            //             ),
-            //             true))
+            Positioned(
+                top: 5,
+                right: 5,
+                child: _isFavorite
+                    ? fvtIconBtn(
+                        Icon(
+                          Icons.favorite,
+                          size: 20,
+                          color: Colors.red,
+                        ),
+                        false)
+                    : fvtIconBtn(
+                        Icon(
+                          Icons.favorite_border,
+                          size: 20,
+                          color: Colors.red,
+                        ),
+                        true))
           ],
         ),
       ),

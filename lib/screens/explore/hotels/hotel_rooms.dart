@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:justorderuser/screens/explore/booking/review_booking.dart';
 import 'package:justorderuser/backend/providers/source_provider.dart';
@@ -17,72 +18,78 @@ class HotelRooms extends StatelessWidget {
         .hotelData
         .firstWhere((element) => element.id == hotelId);
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        foregroundColor: Colors.black,
-        title: Text('Rooms', style: TextStyle(color: Colors.black)),
-      ),
-      body: Padding(
-          padding: EdgeInsets.all(10),
-          child: roomsList.isEmpty || roomsList == null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/113.jpg',
-                        width: MediaQuery.of(context).size.width * 0.4,
+    print(roomsList[0].deluxeType.image);
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle(
+            statusBarIconBrightness: Brightness.light,
+            statusBarColor: Colors.transparent),
+        child: Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            foregroundColor: Colors.white,
+            title: Text('Rooms', style: TextStyle(color: Colors.white)),
+          ),
+          body: Padding(
+              padding: EdgeInsets.all(10),
+              child: roomsList.isEmpty || roomsList == null
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/113.jpg',
+                            width: MediaQuery.of(context).size.width * 0.4,
+                          ),
+                          Text(
+                            'No Rooms Available !!',
+                            style: TextStyle(
+                                fontSize: 25, color: Colors.grey.shade400),
+                          )
+                        ],
                       ),
-                      Text(
-                        'No Rooms Available !!',
-                        style: TextStyle(
-                            fontSize: 25, color: Colors.grey.shade400),
-                      )
-                    ],
-                  ),
-                )
-              : ListView(
-                  children: [
-                    RoomsTiles(
-                        hotel.id,
-                        hotel.hotelDetail.hotelName,
-                        context,
-                        roomsList[0].singleType.roomtype,
-                        roomsList[0].singleType.price,
-                        roomsList[0].singleType.kids,
-                        roomsList[0].singleType.adults,
-                        roomsList[0].singleType.image),
-                    RoomsTiles(
-                        hotel.id,
-                        hotel.hotelDetail.hotelName,
-                        context,
-                        roomsList[0].doubleType.roomType,
-                        roomsList[0].doubleType.price,
-                        roomsList[0].doubleType.kids,
-                        roomsList[0].doubleType.adults,
-                        roomsList[0].doubleType.image),
-                    RoomsTiles(
-                        hotel.id,
-                        hotel.hotelDetail.hotelName,
-                        context,
-                        roomsList[0].duplexType.roomtype,
-                        roomsList[0].duplexType.price,
-                        roomsList[0].duplexType.kids,
-                        roomsList[0].duplexType.adults,
-                        roomsList[0].duplexType.image),
-                    RoomsTiles(
-                        hotel.id,
-                        hotel.hotelDetail.hotelName,
-                        context,
-                        roomsList[0].deluxeType.roomtype,
-                        roomsList[0].deluxeType.price,
-                        roomsList[0].deluxeType.kids,
-                        roomsList[0].deluxeType.adults,
-                        roomsList[0].deluxeType.image)
-                  ],
-                )),
-    );
+                    )
+                  : ListView(
+                      children: [
+                        RoomsTiles(
+                            hotel.id,
+                            hotel.hotelDetail.hotelName,
+                            context,
+                            roomsList[0].singleType.roomtype,
+                            roomsList[0].singleType.price,
+                            roomsList[0].singleType.kids,
+                            roomsList[0].singleType.adults,
+                            roomsList[0].singleType.image),
+                        RoomsTiles(
+                            hotel.id,
+                            hotel.hotelDetail.hotelName,
+                            context,
+                            roomsList[0].doubleType.roomType,
+                            roomsList[0].doubleType.price,
+                            roomsList[0].doubleType.kids,
+                            roomsList[0].doubleType.adults,
+                            roomsList[0].doubleType.image),
+                        RoomsTiles(
+                            hotel.id,
+                            hotel.hotelDetail.hotelName,
+                            context,
+                            roomsList[0].duplexType.roomtype,
+                            roomsList[0].duplexType.price,
+                            roomsList[0].duplexType.kids,
+                            roomsList[0].duplexType.adults,
+                            roomsList[0].duplexType.image),
+                        RoomsTiles(
+                            hotel.id,
+                            hotel.hotelDetail.hotelName,
+                            context,
+                            roomsList[0].deluxeType.roomtype,
+                            roomsList[0].deluxeType.price,
+                            roomsList[0].deluxeType.kids,
+                            roomsList[0].deluxeType.adults,
+                            roomsList[0].deluxeType.image)
+                      ],
+                    )),
+        ));
   }
 }
 
@@ -147,8 +154,8 @@ class RoomsTiles extends StatelessWidget {
                 trailing: InkWell(
                   onTap: () {
                     Navigator.of(context).push(MaterialPageRoute(
-                        builder: (ctx) => BookingReview(hotelId, image,
-                            hotelName, price, roomType, kids, adults)));
+                        builder: (ctx) => BookingReview(hotelId, hotelName,
+                            price, roomType, kids, adults)));
                   },
                   child: Chip(
                       backgroundColor: Colors.green, label: Text('Book Now')),

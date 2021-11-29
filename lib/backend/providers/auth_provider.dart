@@ -61,6 +61,7 @@ class AuthProvider {
       var data = await HttpWrapper.sendPostRequest(url: SIGNUP, body: body);
       CustomToast.showToast(data['message']);
       if (data['success']) {
+        print(data);
         await setToken(data['token']);
         return true;
       } else {

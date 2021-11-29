@@ -62,12 +62,13 @@ class _CommentsBarState extends State<RestaurantReviews> {
     return Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
-          centerTitle: true,
-          backgroundColor: Colors.white,
+          foregroundColor: Colors.white,
           title: Text(
             'Comment & Ratings',
             style: TextStyle(
-                fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         body: _isloading

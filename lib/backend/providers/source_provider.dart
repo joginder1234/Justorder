@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:justorderuser/backend/common/http_wrapper.dart';
 import 'package:justorderuser/backend/urls/urls.dart';
 import 'package:justorderuser/common/custom_toast.dart';
+import 'package:justorderuser/modals/address.dart';
 import 'package:justorderuser/modals/hotel_detail.dart';
 import 'package:justorderuser/modals/rooms_details.dart';
 
 class HotelDataProvider with ChangeNotifier {
+  Map<String, dynamic> userAddressProvider = {};
+
   List<Hotel> hotelData = [];
 
   List<RoomsData> roomsList = [];

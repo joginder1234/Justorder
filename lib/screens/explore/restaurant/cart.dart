@@ -4,12 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_elegant_number_button/flutter_elegant_number_button.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart';
+import 'package:intl/intl.dart';
 import 'package:justorderuser/backend/common/http_wrapper.dart';
 import 'package:justorderuser/backend/providers/restaurant_provider.dart';
 import 'package:justorderuser/backend/urls/urls.dart';
+import 'package:justorderuser/common/custom_toast.dart';
 import 'package:justorderuser/explore.dart';
 import 'package:justorderuser/modals/restaurant_details.dart';
 import 'package:justorderuser/screens/base_widget.dart';
+import 'package:justorderuser/screens/explore/hotels/hotel_functions.dart';
+import 'package:justorderuser/screens/order_history/restaurant_orders.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -25,9 +29,42 @@ class _RestaurantCartState extends State<RestaurantCart> {
   bool _isLoading = false;
   bool _deleting = false;
   double serviceCharge = 0.0;
+  bool addressValue = false;
+  bool ordering = false;
+  List<bool> addresValuechange = [true, false];
+
+  final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _cityController = TextEditingController();
+  final TextEditingController _stateController = TextEditingController();
+  final TextEditingController _contactController = TextEditingController();
 
   double deliveryCharge = 0.0;
 
+  String cartId = '';
+  String userId = '';
+  String restId = '';
+
+  bool _isExpanded = false;
+
+  @override
+  void dispose() {
+    _addressController.dispose();
+    _cityController.dispose();
+    _stateController.dispose();
+    _contactController.dispose();
+    super.dispose();
+  }
+
+  /// Getting quantity of each item
+  int getQuantity() {
+    int quantity = 0;
+    _cartItems.forEach((element) {
+      quantity += int.parse(element['quantity'].toString());
+    });
+    return quantity;
+  }
+
+  ///Getting total of all items in cart
   double getCartTotal() {
     double cartTotal = 0.0;
     _cartItems.forEach((element) {
@@ -78,327 +115,516 @@ class _RestaurantCartState extends State<RestaurantCart> {
       var cartData = await HttpWrapper.sendGetRequest(url: GET_CART_ITEM);
       print("Cart Data :: $cartData");
       if (cartData['success'] == true) {
-        var _restaurantDetails = (cartData['carts'] as List).length <= 0
-            ? null
-            : Provider.of<ResaurantsDataProvider>(context, listen: false)
-                .allRestaurants
-                .firstWhere((element) =>
-                    element.id == cartData['carts'][0]['resturantId']);
         setState(() {
-          _cartItems = cartData['carts'];
+          cartId = cartData['carts'][0]['_id'];
+          userId = cartData['carts'][0]['userId'];
+          restId = cartData['carts'][0]['restaurantId'];
+        });
+        var _restaurantDetails =
+            (cartData['carts'][0]['cartItems'] as List).length <= 0
+                ? null
+                : Provider.of<ResaurantsDataProvider>(context, listen: false)
+                    .allRestaurants
+                    .firstWhere((element) =>
+                        element.id == cartData['carts'][0]['restaurantId']);
+        setState(() {
+          _cartItems = cartData['carts'][0]['cartItems'];
           _isLoading = false;
-          deliveryCharge = (cartData['carts'] as List).length <= 0
-              ? 0.0
-              : _restaurantDetails!.deliveryCharge;
-          serviceCharge = (cartData['carts'] as List).length <= 0
-              ? 0.0
-              : _restaurantDetails!.serviceCharge;
+          deliveryCharge =
+              (cartData['carts'][0]['cartItems'] as List).length <= 0
+                  ? 0.0
+                  : _restaurantDetails!.deliveryCharge;
+          serviceCharge =
+              (cartData['carts'][0]['cartItems'] as List).length <= 0
+                  ? 0.0
+                  : _restaurantDetails!.serviceCharge;
         });
       }
     } catch (e) {
-      log(e.toString());
+      CustomToast.showToast(e.toString());
       setState(() {
         _isLoading = false;
       });
     }
   }
 
-  deleteCartItems(String itemId) async {
-    print('Cart Id :: $itemId');
+  deleteCartItems(String itemId, String cartId) async {
     setState(() {
       _deleting = true;
     });
-    try {
-      var deleteResponse = await HttpWrapper.sendDeleteRequest(
-          url: DELETE_CART_ITEMS + '/$itemId');
-      print('URL :: ${DELETE_CART_ITEMS + '/$itemId'}');
-      if (deleteResponse['success'] == true) {
-        print(deleteResponse);
-        loadCartItems();
-        setState(() {
-          _deleting = false;
-        });
-      } else {
-        print(deleteResponse);
-      }
-    } catch (e) {
-      log(e.toString());
+    var response = await FunctionsProvider.deleteCartItems(itemId, cartId);
+
+    if (response) {
+      loadCartItems();
+      Provider.of<Quantity>(context, listen: false).decreaseQuantity();
+      setState(() {
+        _deleting = false;
+      });
+    } else {
       setState(() {
         _deleting = false;
       });
     }
   }
 
-  // sendOrder() async {
-  //   Map<String, dynamic> _order = {
-  //     'restaurantId': _cartItems[0]['resturantId'],
-  //     'cartId': _cartItems
-  //     'userId' :
-  //   };
-  // }
+  String getRestName() {
+    String restName = '';
+    var restaurant = Provider.of<ResaurantsDataProvider>(context, listen: false)
+        .allRestaurants
+        .firstWhere((element) => element.id == restId);
+    restName = restaurant.restaurantName;
+    return restName;
+  }
+
+  sendOrder() async {
+    setState(() {
+      ordering = true;
+    });
+    try {
+      Map<String, dynamic> _order = {
+        'orderDate': DateFormat('yMMMd').format(DateTime.now()),
+        'orderTime': TimeOfDay.now().format(context),
+        'restaurantId': restId,
+        // 'restaurantName': getRestName(),
+        // 'cartItems': _cartItems,
+        'cartId': cartId,
+        'userId': userId,
+        'status': 'preparing',
+        'paymentMethod': 'card',
+        'totalPrice':
+            (getCartTotal() + deliveryCharge + serviceCharge).toString(),
+        // 'quantity': getQuantity().toString(),
+        // 'transaction_id': '',
+        // 'transiction_details': 'paid',
+        'line1': _addressController.text.trim(),
+        'city': _cityController.text.trim(),
+        'state': _stateController.text.trim(),
+        'phone': _contactController.text.trim()
+      };
+
+      // Provider.of<ResaurantsDataProvider>(context, listen: false)
+      //     .myOrders
+      //     .add(_order);
+
+      await HttpWrapper.sendPostRequest(url: ORDER_FOOD, body: _order)
+          .then((value) {
+        print(value);
+        print('Order Submitted');
+        emptyCart();
+        setState(() {
+          deliveryCharge = 0.0;
+          ordering = false;
+        });
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => RestaurantOrders()),
+            (route) => false);
+      });
+    } catch (e) {
+      log(e.toString());
+      setState(() {
+        ordering = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _cartItems == [] || _cartItems.isEmpty
-          ? Colors.white
-          : Colors.grey.shade100,
-      appBar: AppBar(
-        title: Text("Order Basket", style: TextStyle(color: Colors.black)),
-        actions: [
-          IconButton(
-              onPressed: () {
-                Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => BaseWidget()),
-                    (route) => false);
-              },
-              icon: Icon(
-                Icons.home,
-                color: Colors.black,
-              ))
-        ],
-      ),
-      body: Column(
-        children: [
-          _isLoading
-              ? LinearProgressIndicator(
-                  backgroundColor: Colors.grey.shade100,
-                  color: Colors.green,
-                )
-              : Container(
-                  height: 4,
-                ),
-          Expanded(
-            child: _isLoading
-                ? Container(
-                    color: Colors.white,
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _isExpanded = false;
+        });
+      },
+      child: Scaffold(
+        backgroundColor: _cartItems == [] || _cartItems.isEmpty
+            ? Colors.white
+            : Colors.grey.shade100,
+        appBar: AppBar(
+          foregroundColor: Colors.white,
+          title: Text(
+            "Order Basket",
+          ),
+          actions: [
+            IconButton(
+                onPressed: () {
+                  Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => BaseWidget()),
+                      (route) => false);
+                },
+                icon: Icon(
+                  Icons.home,
+                ))
+          ],
+        ),
+        body: Column(
+          children: [
+            _isLoading
+                ? LinearProgressIndicator(
+                    backgroundColor: Colors.grey.shade100,
+                    color: Colors.green,
                   )
-                : _cartItems.isEmpty || _cartItems == []
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Image(
-                              image: AssetImage('assets/empty.jpg'),
-                              width: MediaQuery.of(context).size.width * 0.35,
-                            ),
-                            Text(
-                              'No Items in cart....',
-                              style: TextStyle(
-                                  fontSize: 18, color: Colors.grey.shade600),
-                            ),
-                            Text(
-                              'add some to continue',
-                              style: TextStyle(
-                                  fontSize: 18, color: Colors.grey.shade600),
-                            )
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        shrinkWrap: true,
-                        padding: EdgeInsets.all(10),
-                        itemCount: _cartItems.length,
-                        itemBuilder: (ctx, i) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 5),
-                            child: ListTile(
-                              onTap: () {},
-                              tileColor: Colors.white,
-                              title: Text(
-                                _cartItems[i]['name'] ?? '',
-                                style: TextStyle(
-                                    fontSize: 20,
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.w600),
+                : Container(
+                    height: 4,
+                  ),
+            Expanded(
+              child: _isLoading
+                  ? Container(
+                      color: Colors.white,
+                    )
+                  : _cartItems.isEmpty || _cartItems == []
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Image(
+                                image: AssetImage('assets/empty.jpg'),
+                                width: MediaQuery.of(context).size.width * 0.35,
                               ),
-                              subtitle: Text(
-                                  '\$${_cartItems[i]['price'] + 0.0}',
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.orange,
-                                      fontWeight: FontWeight.w600)),
-                              trailing: Container(
-                                constraints: BoxConstraints(
-                                    minWidth: 130, maxWidth: 160),
-                                width: MediaQuery.of(context).size.width * 0.4,
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    ElegantNumberButton(
-                                        color: Colors.grey,
-                                        initialValue: int.parse(_cartItems[i]
-                                                ['quantity']
-                                            .toString()),
-                                        minValue: 1,
-                                        maxValue: 100,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            _cartItems[i]['quantity'] =
-                                                value.toString();
-                                          });
-                                        },
-                                        decimalPlaces: 1),
-                                    _deleting
-                                        ? IconButton(
-                                            onPressed: null,
-                                            icon: Icon(Icons.delete,
-                                                color: Colors.grey.shade300))
-                                        : IconButton(
+                              Text(
+                                'No Items in cart....',
+                                style: TextStyle(
+                                    fontSize: 18, color: Colors.grey.shade600),
+                              ),
+                              Text(
+                                'add some to continue',
+                                style: TextStyle(
+                                    fontSize: 18, color: Colors.grey.shade600),
+                              )
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          padding: EdgeInsets.all(10),
+                          itemCount: _cartItems.length,
+                          itemBuilder: (ctx, i) {
+                            return Container(
+                              decoration: BoxDecoration(
+                                  boxShadow: [
+                                    BoxShadow(
+                                        color: Colors.grey.shade200,
+                                        blurRadius: 10)
+                                  ],
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border:
+                                      Border.all(color: Colors.grey.shade300)),
+                              margin: EdgeInsets.symmetric(vertical: 5),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 10),
+                              child: Row(
+                                children: [
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _cartItems[i]['name'] ?? '',
+                                        style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w400),
+                                      ),
+                                      Text(
+                                        '\$${_cartItems[i]['price'] + 0.0}',
+                                        style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600),
+                                      ),
+                                    ],
+                                  ),
+                                  const Spacer(),
+                                  SizedBox(
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 105,
+                                          decoration: BoxDecoration(
+                                              // color: Colors.grey.shade200,
+                                              borderRadius:
+                                                  BorderRadius.circular(15)),
+                                          child: Row(
+                                            children: [
+                                              IconButton(
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      final newvalue =
+                                                          int.parse(_cartItems[
+                                                                          i][
+                                                                      'quantity']
+                                                                  .toString()) -
+                                                              1;
+                                                      _cartItems[i]
+                                                              ['quantity'] =
+                                                          newvalue.clamp(
+                                                              1, 100);
+                                                    });
+                                                  },
+                                                  icon:
+                                                      const Icon(Icons.remove)),
+                                              Text(_cartItems[i]['quantity']
+                                                  .toString()),
+                                              IconButton(
+                                                  onPressed: () {
+                                                    setState(() {
+                                                      final newvalue =
+                                                          int.parse(_cartItems[
+                                                                          i][
+                                                                      'quantity']
+                                                                  .toString()) +
+                                                              1;
+                                                      _cartItems[i]
+                                                              ['quantity'] =
+                                                          newvalue.clamp(
+                                                              1, 100);
+                                                    });
+                                                  },
+                                                  icon: const Icon(Icons.add))
+                                            ],
+                                          ),
+                                        ),
+                                        IconButton(
                                             onPressed: () {
                                               deleteCartItems(
-                                                  _cartItems[i]['_id']);
+                                                  _cartItems[i]['_id'], cartId);
                                             },
                                             icon: Icon(
                                               Icons.delete,
-                                              color: Colors.red.shade800,
+                                              color: Colors.red,
                                             ))
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
-          ),
-          _cartItems.isEmpty
-              ? Container()
-              : Card(
-                  elevation: 10,
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Cart Total',
-                              style: GoogleFonts.robotoCondensed(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                            Text(
-                              '\$' + getCartTotal().toString(),
-                              style: GoogleFonts.robotoCondensed(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Delivery Charge',
-                              style: GoogleFonts.robotoCondensed(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                            Text(
-                              '(+) \$$deliveryCharge',
-                              style: GoogleFonts.robotoCondensed(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Service Charge',
-                              style: GoogleFonts.robotoCondensed(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                            Text(
-                              '(+) \$$serviceCharge',
-                              style: GoogleFonts.robotoCondensed(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                        Divider(
-                          thickness: 1.5,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Container(
-                              width: 150,
-                              constraints:
-                                  BoxConstraints(minWidth: 130, maxWidth: 170),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Grand Total',
-                                    style: GoogleFonts.robotoCondensed(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  Text(
-                                    '\$' +
-                                        (getCartTotal() +
-                                                deliveryCharge +
-                                                serviceCharge)
-                                            .toString(),
-                                    style: GoogleFonts.robotoCondensed(
-                                        fontSize: 23,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.blue),
-                                  ),
+                                      ],
+                                    ),
+                                  )
                                 ],
                               ),
-                            ),
-                            Container(
-                                constraints: BoxConstraints(
-                                    maxWidth: 200, minWidth: 150),
-                                width: MediaQuery.of(context).size.width * 0.4,
-                                child: !_isLoading
-                                    ? ElevatedButton(
-                                        onPressed: () {
-                                          if (_cartItems.isEmpty) {
-                                            return;
-                                          } else {
-                                            emptyCart();
-                                            setState(() {
-                                              deliveryCharge = 0.0;
-                                            });
-                                          }
-                                        },
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 15),
-                                          child: Text(
-                                            'ORDER NOW',
-                                            style: GoogleFonts.robotoCondensed(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white),
-                                          ),
-                                        ))
-                                    : ElevatedButton(
-                                        style: ButtonStyle(
-                                            backgroundColor:
-                                                MaterialStateProperty.all(
-                                                    Colors.grey)),
-                                        onPressed: null,
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 15),
-                                          child: Text(
-                                            'ORDER NOW',
-                                            style: GoogleFonts.robotoCondensed(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white),
-                                          ),
-                                        )))
-                          ],
-                        )
-                      ],
-                    ),
+                            );
+                          }),
+            ),
+          ],
+        ),
+        bottomNavigationBar: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          height: _cartItems.isEmpty
+              ? 0
+              : _isExpanded
+                  ? 370
+                  : 180,
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            boxShadow: [BoxShadow(color: Colors.grey.shade400, blurRadius: 15)],
+            color: Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _isExpanded = true;
+                    });
+                  },
+                  child: Container(
+                    height: 10,
+                    width: MediaQuery.of(context).size.width,
+                    alignment: Alignment.center,
+                    child: _isExpanded
+                        ? Icon(Icons.arrow_drop_down)
+                        : Icon(Icons.arrow_drop_up_outlined),
                   ),
+                ),
+                AnimatedContainer(
+                  duration: Duration(milliseconds: 300),
+                  height: _isExpanded ? 190 : 0,
+                  child: _isExpanded
+                      ? SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Summary',
+                                style: TextStyle(
+                                    fontSize: 20, fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(
+                                height: 10,
+                              ),
+                              buildCustomeTile(
+                                  context, getCartTotal(), 'Subtotal'),
+                              const Divider(
+                                thickness: 1.1,
+                              ),
+                              buildCustomeTile(
+                                  context, deliveryCharge, 'Delivery Charge'),
+                              const Divider(
+                                thickness: 1.1,
+                              ),
+                              buildCustomeTile(
+                                  context, serviceCharge, 'Service Charge'),
+                              const Divider(
+                                thickness: 1.1,
+                              ),
+                            ],
+                          ),
+                        )
+                      : Container(),
+                ),
+                ListTile(
+                  onTap: () {
+                    setState(() {
+                      _isExpanded = true;
+                    });
+                  },
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text(
+                    'Total',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: !_isExpanded
+                      ? const Text(
+                          'Tap for details',
+                          style: TextStyle(fontSize: 13),
+                        )
+                      : Container(),
+                  trailing: Text(
+                    '\$${(getCartTotal() + deliveryCharge + serviceCharge)}',
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                          style: ButtonStyle(
+                              fixedSize: MaterialStateProperty.all(
+                                  Size(MediaQuery.of(context).size.width, 50))),
+                          onPressed: () {
+                            showAddressDialog(context);
+                          },
+                          child: const Text(
+                            'Begin Chechout',
+                            style: TextStyle(fontSize: 20),
+                          )),
+                    ),
+                  ],
                 )
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  SizedBox buildCustomeTile(
+      BuildContext context, double subtotal, String title) {
+    return SizedBox(
+      width: MediaQuery.of(context).size.width,
+      height: 35,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontSize: 18),
+          ),
+          Text(
+            '\$$subtotal',
+            style: const TextStyle(fontSize: 18),
+          ),
         ],
       ),
+    );
+  }
+
+  Future<dynamic> showAddressDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (BuildContext context, setState) {
+          return SimpleDialog(
+            contentPadding: EdgeInsets.all(15),
+            title: Text('Choose your address'),
+            children: [
+              buildtextField('Address', _addressController),
+              const SizedBox(
+                height: 10,
+              ),
+              buildtextField('City', _cityController),
+              const SizedBox(
+                height: 10,
+              ),
+              buildtextField('State', _stateController),
+              const SizedBox(
+                height: 10,
+              ),
+              buildtextField('Phone', _contactController),
+              const SizedBox(
+                height: 20,
+              ),
+              OutlinedButton(
+                  onPressed: () {},
+                  child: Text(
+                    'Edit Address',
+                    style: TextStyle(fontSize: 18),
+                  )),
+              ElevatedButton(
+                  onPressed: () async {
+                    Navigator.of(context).pop(context);
+                    buildLoadingStatus(ordering);
+                    await sendOrder();
+                  },
+                  child: Text(
+                    'Proceed',
+                    style: TextStyle(fontSize: 18),
+                  ))
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  buildLoadingStatus(bool loading) {
+    showDialog(
+      context: context,
+      builder: (_) => StatefulBuilder(
+        builder: (BuildContext context, setState) {
+          return SimpleDialog(
+            children: [
+              Center(
+                child: loading
+                    ? CircularProgressIndicator(
+                        color: Colors.green,
+                        backgroundColor: Colors.transparent,
+                      )
+                    : Image.asset(
+                        'assets/submit.gif',
+                        width: MediaQuery.of(context).size.width * 0.6,
+                      ),
+              )
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  TextField buildtextField(String hint, TextEditingController cont) {
+    return TextField(
+      controller: cont,
+      decoration: InputDecoration(
+          contentPadding: EdgeInsets.symmetric(horizontal: 20),
+          fillColor: Colors.grey.shade200,
+          filled: true,
+          border: OutlineInputBorder(
+              borderSide: BorderSide.none,
+              borderRadius: BorderRadius.circular(20)),
+          hintText: hint),
     );
   }
 }

@@ -3,21 +3,27 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:justorderuser/backend/common/http_wrapper.dart';
+import 'package:justorderuser/backend/providers/source_provider.dart';
+import 'package:justorderuser/backend/services/paymentservice.dart';
 import 'package:justorderuser/backend/urls/urls.dart';
 import 'package:justorderuser/common/custom_toast.dart';
+import 'package:justorderuser/modals/address.dart';
+import 'package:justorderuser/modals/hotel_detail.dart';
 import 'package:justorderuser/screens/base_widget.dart';
 import 'package:justorderuser/screens/explore/booking/add_card.dart';
+import 'package:justorderuser/screens/order_history/booking_history_details.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 
 class BookingReview extends StatefulWidget {
   final String hoteId;
-  final String imageUrl;
   final String hotelName;
   final double price;
   final String roomType;
   final int kids;
   final int adults;
-  BookingReview(this.hoteId, this.imageUrl, this.hotelName, this.price,
-      this.roomType, this.kids, this.adults);
+  BookingReview(this.hoteId, this.hotelName, this.price, this.roomType,
+      this.kids, this.adults);
 
   @override
   _BookingReviewState createState() => _BookingReviewState();
@@ -25,6 +31,25 @@ class BookingReview extends StatefulWidget {
 
 class _BookingReviewState extends State<BookingReview> {
   Map<String, dynamic> currentUser = {};
+  final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _cityController = TextEditingController();
+  final TextEditingController _stateController = TextEditingController();
+  final TextEditingController _contactController = TextEditingController();
+  final TextEditingController _postalController = TextEditingController();
+  final TextEditingController _countryController = TextEditingController();
+
+  String line1 = '';
+  String city = '';
+  String state = '';
+  String contact = '';
+  String postal = '';
+  String country = '';
+
+  String transactionId = '';
+  int retryTime = 3;
+
+  bool loading = false;
+
   @override
   void initState() {
     super.initState();
@@ -115,10 +140,10 @@ class _BookingReviewState extends State<BookingReview> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                          width: MediaQuery.of(context).size.width * 0.5,
+                          width: MediaQuery.of(context).size.width * 0.75,
                           child: Text(widget.hotelName,
                               style: GoogleFonts.italianno(
-                                  color: Colors.blueGrey,
+                                  color: Color(0XFF0F2C67),
                                   fontSize: 55,
                                   fontWeight: FontWeight.w500))),
                       Text(
@@ -131,22 +156,6 @@ class _BookingReviewState extends State<BookingReview> {
                       )
                     ],
                   ),
-                  Container(
-                    height: MediaQuery.of(context).size.width * 0.3,
-                    width: MediaQuery.of(context).size.width * 0.4,
-                    decoration: BoxDecoration(
-                        color: Colors.amber,
-                        border:
-                            Border.all(color: Colors.grey.shade200, width: 5),
-                        borderRadius: BorderRadius.circular(15)),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image(
-                        image: NetworkImage(widget.imageUrl),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  )
                 ],
               ),
               Container(
@@ -187,6 +196,7 @@ class _BookingReviewState extends State<BookingReview> {
                                 Text(
                                   DateFormat('MMMd').format(checkinDate),
                                   style: GoogleFonts.anton(
+                                    color: Color(0XFF0F2C67),
                                     fontSize: 25,
                                   ),
                                 )
@@ -223,6 +233,7 @@ class _BookingReviewState extends State<BookingReview> {
                                 Text(
                                   DateFormat('MMMd').format(checkoutDate),
                                   style: GoogleFonts.anton(
+                                    color: Color(0XFF0F2C67),
                                     fontSize: 25,
                                   ),
                                 )
@@ -332,33 +343,98 @@ class _BookingReviewState extends State<BookingReview> {
                   )
                 ],
               ),
-              Divider(),
-              Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Payment Method',
+              Container(
+                margin: EdgeInsets.symmetric(vertical: 10),
+                padding: EdgeInsets.all(10),
+                color: Colors.grey.shade100,
+                width: MediaQuery.of(context).size.width,
+                height: 130,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'User Address :',
                           style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.w600)),
-                      TextButton.icon(
-                          onPressed: () {
-                            Navigator.of(context).push(MaterialPageRoute(
-                                builder: (ctx) => AddCardScreen()));
-                          },
-                          icon: Icon(Icons.add),
-                          label: Text('Add', style: TextStyle(fontSize: 18)))
-                    ],
-                  ),
-                  Container(
-                    height: 50,
-                    color: Colors.grey.shade100,
-                    width: double.infinity,
-                    child: Center(child: Text('No Payment Method added yet')),
-                  )
-                ],
+                              fontSize: 18, fontWeight: FontWeight.w600),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Username',
+                              style: TextStyle(
+                                  fontSize: 18, color: Colors.grey.shade900),
+                            ),
+                            line1 == ''
+                                ? Container()
+                                : Text(
+                                    line1,
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        color: Colors.grey.shade900),
+                                  ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                city == ''
+                                    ? Container()
+                                    : Text(
+                                        city,
+                                        style: TextStyle(
+                                            fontSize: 18,
+                                            color: Colors.grey.shade900),
+                                      ),
+                                state == ''
+                                    ? Container()
+                                    : Text(
+                                        state,
+                                        style: TextStyle(
+                                            fontSize: 18,
+                                            color: Colors.grey.shade900),
+                                      ),
+                              ],
+                            ),
+                            contact == ''
+                                ? Container()
+                                : Text(
+                                    contact,
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        color: Colors.grey.shade900),
+                                  ),
+                          ],
+                        )
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        TextButton(
+                            onPressed: () {
+                              showAddressDialog(context);
+                            },
+                            child: Text('Add')),
+                        TextButton(
+                            onPressed: () {
+                              showAddressDialog(context).then((_) {
+                                setState(() {
+                                  line1 = _addressController.text;
+                                  city = _cityController.text;
+                                  state = _stateController.text;
+                                  contact = _contactController.text;
+                                });
+                              });
+                            },
+                            child: Text('Edit')),
+                      ],
+                    )
+                  ],
+                ),
               ),
-              Divider(),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -407,7 +483,8 @@ class _BookingReviewState extends State<BookingReview> {
                           },
                           child: Text(
                             'Add Coupon',
-                            style: GoogleFonts.robotoCondensed(fontSize: 18),
+                            style: GoogleFonts.robotoCondensed(
+                                fontSize: 18, color: Colors.red),
                           ))
                 ],
               ),
@@ -427,24 +504,110 @@ class _BookingReviewState extends State<BookingReview> {
               SizedBox(
                 height: 40,
               ),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                    style: ButtonStyle(
-                        padding: MaterialStateProperty.all(
-                            EdgeInsets.symmetric(vertical: 15))),
-                    onPressed: () {
-                      createOrder(total, true);
-                    },
-                    child: Text('Confirm and Pay',
-                        style: GoogleFonts.robotoCondensed(
-                            fontSize: 18, fontWeight: FontWeight.w600))),
-              )
             ],
           ),
         ),
       ),
+      bottomNavigationBar: Container(
+        padding: EdgeInsets.all(20),
+        width: double.infinity,
+        child: ElevatedButton(
+            style: ButtonStyle(
+                backgroundColor:
+                    MaterialStateProperty.all(Theme.of(context).buttonColor),
+                padding: MaterialStateProperty.all(
+                    EdgeInsets.symmetric(vertical: 15))),
+            onPressed: () async {
+              var paymentResponse =
+                  await FlutterStripePayment.createPaymentIntent(
+                      (total - (_isCouponApplied ? total * 10 / 100 : 0.00)),
+                      'INR',
+                      'Joginder',
+                      '$line1, $city, $state',
+                      postal,
+                      contact,
+                      country);
+              await initPaymentSheet(paymentResponse);
+              await Stripe.instance.presentPaymentSheet();
+              await getTransactionResponse(context, paymentResponse)
+                  .then((value) {
+                if (value) {
+                  createOrder(total, true);
+                }
+              });
+            },
+            child: Text('CONFIRM AND PAY',
+                style: GoogleFonts.robotoCondensed(
+                    fontSize: 20, fontWeight: FontWeight.w500))),
+      ),
     );
+  }
+
+  TextField buildtextField(String hint, TextEditingController cont) {
+    return TextField(
+      controller: cont,
+      decoration: InputDecoration(
+          contentPadding: EdgeInsets.symmetric(horizontal: 20),
+          fillColor: Colors.grey.shade200,
+          filled: true,
+          border: OutlineInputBorder(
+              borderSide: BorderSide.none,
+              borderRadius: BorderRadius.circular(20)),
+          hintText: hint),
+    );
+  }
+
+  Future<dynamic> showAddressDialog(BuildContext context) {
+    return showDialog(
+        context: context,
+        builder: (ctx) => SimpleDialog(
+              contentPadding: EdgeInsets.all(15),
+              title: Text('Choose your address'),
+              children: [
+                buildtextField('Address', _addressController),
+                const SizedBox(
+                  height: 10,
+                ),
+                buildtextField('City', _cityController),
+                const SizedBox(
+                  height: 10,
+                ),
+                buildtextField('State', _stateController),
+                const SizedBox(
+                  height: 10,
+                ),
+                buildtextField('PostalCode', _postalController),
+                const SizedBox(
+                  height: 10,
+                ),
+                buildtextField('Country', _countryController),
+                const SizedBox(
+                  height: 10,
+                ),
+                buildtextField('Phone', _contactController),
+                const SizedBox(
+                  height: 20,
+                ),
+                OutlinedButton(
+                    onPressed: () {
+                      setState(() {
+                        TextEditingController().clear();
+                      });
+                    },
+                    child: Text(
+                      'CANCEL',
+                      style: TextStyle(fontSize: 18),
+                    )),
+                ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(
+                      'SAVE',
+                      style: TextStyle(fontSize: 18),
+                    ))
+              ],
+            ));
   }
 
   Container roundButton(IconData icon) {
@@ -455,6 +618,67 @@ class _BookingReviewState extends State<BookingReview> {
             color: Colors.grey.shade200,
             borderRadius: BorderRadius.circular(100)),
         child: Icon(icon, color: Colors.black, size: 20));
+  }
+
+  Future initPaymentSheet(dynamic _paymentSheetData) async {
+    await Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: SetupPaymentSheetParameters(
+      applePay: true,
+      googlePay: true,
+      style: ThemeMode.dark,
+      testEnv: true,
+      merchantCountryCode: 'IN',
+      merchantDisplayName: 'Royal Dhaba',
+      customerId: _paymentSheetData['customer'],
+      paymentIntentClientSecret: _paymentSheetData['client_secret'],
+      customerEphemeralKeySecret: _paymentSheetData['ephemeralKey'],
+    ));
+  }
+
+  Future<bool> getTransactionResponse(
+      BuildContext context, dynamic _paymentSheetData) async {
+    var value =
+        await FlutterStripePayment.getTransactions(_paymentSheetData['id']);
+    if (value['success'] == true) {
+      setState(() {
+        transactionId = value['paymentIntents']['id'];
+      });
+      print('transaction Value :: $transactionId');
+
+      return true;
+    } else {
+      if (retryTime == 0) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          backgroundColor: Colors.black,
+          content: const Text(
+            'Unable to preocess your payment! Please make a fresh payment',
+          ),
+          action: SnackBarAction(
+              label: 'OK',
+              onPressed: () {
+                setState(() {
+                  loading = false;
+                });
+              }),
+        ));
+      } else {
+        setState(() {
+          retryTime--;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          backgroundColor: Colors.black,
+          content: Text(
+            value['message'].toString(),
+          ),
+          action: SnackBarAction(
+              label: 'Try Again!',
+              onPressed: () {
+                getTransactionResponse(context, _paymentSheetData);
+              }),
+        ));
+      }
+      return false;
+    }
   }
 
   SizedBox dateBox(BuildContext context, String value, String date) {
@@ -474,6 +698,21 @@ class _BookingReviewState extends State<BookingReview> {
             )
           ],
         ));
+  }
+
+  loadBookingHistory() async {
+    try {
+      await HttpWrapper.sendGetRequest(url: GET_HOTEL_BOOKING).then((value) {
+        setState(() {
+          Provider.of<HotelDataProvider>(context, listen: false).hotelBookings =
+              (value['bookings'] as List)
+                  .map((e) => HotelBookingHistoryModel.fromJson(e))
+                  .toList();
+        });
+      });
+    } catch (e) {
+      CustomToast.showToast(e.toString());
+    }
   }
 
   createOrder(double total, bool status) async {
@@ -499,8 +738,10 @@ class _BookingReviewState extends State<BookingReview> {
           .then((value) {
         print('New Booking :: $value');
         CustomToast.showToast(value['message']);
-        Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => BaseWidget()), (route) => false);
+        loadBookingHistory();
+        Navigator.of(context).pushNamedAndRemoveUntil(
+            BookingHistoryDetails.bookingHistoryRoute, (route) => false,
+            arguments: value['booking']['_id']);
       });
     } catch (e) {
       print(e);

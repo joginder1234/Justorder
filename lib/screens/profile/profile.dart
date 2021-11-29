@@ -3,6 +3,7 @@ import 'package:justorderuser/backend/providers/auth_provider.dart';
 import 'package:justorderuser/common/custom_toast.dart';
 import 'package:justorderuser/common/get_started.dart';
 import 'package:justorderuser/screens/order_history/hotel_booking_history.dart';
+import 'package:justorderuser/screens/order_history/restaurant_orders.dart';
 import 'package:justorderuser/screens/profile/change_password.dart';
 import 'package:justorderuser/screens/profile/edit_profile.dart';
 import 'package:justorderuser/screens/profile/payment.dart';
@@ -29,8 +30,9 @@ class _ProfileState extends State<Profile> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+          foregroundColor: Colors.white,
           automaticallyImplyLeading: false,
-          title: Text("Profile", style: TextStyle(color: Colors.black))),
+          title: Text("Profile")),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -74,12 +76,12 @@ class _ProfileState extends State<Profile> {
                   context, MaterialPageRoute(builder: (_) => ChangePassword())),
             ),
             ListTile(title: Text("Help Center"), trailing: Icon(Icons.info)),
-            ListTile(
-              title: Text("Payments"),
-              trailing: Icon(Icons.payment),
-              onTap: () => Navigator.push(
-                  context, MaterialPageRoute(builder: (_) => Payments())),
-            ),
+            // ListTile(
+            //   title: Text("Payments"),
+            //   trailing: Icon(Icons.payment),
+            //   onTap: () => Navigator.push(
+            //       context, MaterialPageRoute(builder: (_) => Payments())),
+            // ),
             ListTile(
                 title: Text("Settings"),
                 trailing: Icon(Icons.settings),
@@ -94,11 +96,10 @@ class _ProfileState extends State<Profile> {
                 onTap: () => Navigator.push(context,
                     MaterialPageRoute(builder: (_) => HotelBookingHistory()))),
             ListTile(
-              title: Text("Restaurant Orders"),
-              trailing: Icon(Icons.navigate_next),
-              // onTap: () => Navigator.push(
-              //     context, MaterialPageRoute(builder: (_) => Settings()))
-            ),
+                title: Text("Restaurant Orders"),
+                trailing: Icon(Icons.navigate_next),
+                onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => RestaurantOrders()))),
             const Divider(
               thickness: 1,
             ),

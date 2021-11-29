@@ -13,11 +13,25 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ResaurantsDataProvider with ChangeNotifier {
   List<Restaurant> allRestaurants = [];
 
+  List<Map<String, dynamic>> myOrders = [];
+
   List restReviews = [];
 
   List category = [];
   List menuList = [];
   List filterMenu = [];
+  List cartItems = [];
+
+  loadCartItems() async {
+    try {
+      var cartData = await HttpWrapper.sendGetRequest(url: GET_CART_ITEM);
+      if (cartData['success'] == true) {
+        cartItems = cartData['carts'][0]['cartItems'];
+      }
+    } catch (e) {
+      log(e.toString());
+    }
+  }
 
   getRestaurants() async {
     try {
@@ -77,29 +91,37 @@ class ResaurantsDataProvider with ChangeNotifier {
     }
   }
 
-  static Future<bool> addtoCart(String restId) async {
+  static Future addtoCart(String restId) async {
     try {
-      var checkCartItems = await HttpWrapper.sendGetRequest(url: GET_CART_ITEM);
-      if (checkCartItems['success'] == true) {
-        if ((checkCartItems['carts'] as List).length > 0) {
-          (checkCartItems['carts'] as List).firstWhere((element) {
-            print('check Element Id :: ${element['resturantId']} and $restId');
-            //  return element['resturantId'] == restId ? true : false;
-            if (element['resturantId'] == restId) {
-              print('Id Match SuccessFull');
-              return true;
-            } else {
-              print('Id Does Not Matched');
-              return false;
-            }
-          });
+      await HttpWrapper.sendGetRequest(url: GET_CART_ITEM).then((value) {
+        print('value retrived');
+        if (value['success'] == true) {
+          print('value success true');
+          if ((value['carts'] as List).isNotEmpty) {
+            print('cart is not empty');
+            (value['carts'][0]['cartItems'] as List).firstWhere((element) {
+              if (element['restaurantId'] == restId) {
+                print(
+                    'Rest ID :: ${element['restaurantId']} and outRestId :: $restId');
+                return true;
+              } else {
+                print('id does not match');
+                return false;
+              }
+            });
+          } else {
+            print('cart is empty');
+            return true;
+          }
         } else {
-          print('Length = 0');
-          return true;
+          print('success false');
         }
-      }
-    } catch (e) {}
-    return false;
+      });
+      // return false;
+    } catch (e) {
+      print(e.toString());
+      return false;
+    }
   }
 
   addItemToCart(Map<String, dynamic> dataMap, String restId) async {
@@ -128,9 +150,30 @@ class ResaurantsDataProvider with ChangeNotifier {
       log(e.toString());
     }
   }
+}
 
-  // setRestaurantList(Restaurant data) {
-  //   this.allRestaurants.add(data);
-  //   notifyListeners();
-  // }
+class Quantity with ChangeNotifier {
+  int orderQuantity = 0;
+
+  Quantity() {
+    HttpWrapper.sendGetRequest(url: GET_CART_ITEM).then((cart) {
+      this.orderQuantity = (cart['carts'][0]['cartItems'] as List).length;
+      notifyListeners();
+    });
+  }
+
+  increaseQuantity() {
+    this.orderQuantity++;
+    notifyListeners();
+  }
+
+  decreaseQuantity() {
+    this.orderQuantity--;
+    notifyListeners();
+  }
+
+  setQuantity(int i) {
+    this.orderQuantity = i;
+    notifyListeners();
+  }
 }

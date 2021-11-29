@@ -40,6 +40,8 @@ dependencies:
   group_radio_button: ^1.1.0
   modal_bottom_sheet: ^2.0.0
   flutter_elegant_number_button: ^0.0.6
+  badges: ^2.0.1
+  flutter_stripe: ^2.0.2
 
 dev_dependencies:
   flutter_test:
@@ -61,6 +63,8 @@ flutter:
     - assets/background.jpg
     - assets/empty.jpg
     - assets/113.jpg
+    - assets/order.gif
+    - assets/submit.gif
   #   - images/a_dot_ham.jpeg
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.

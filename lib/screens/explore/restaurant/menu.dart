@@ -10,7 +10,9 @@ import 'package:justorderuser/backend/providers/restaurant_provider.dart';
 import 'package:justorderuser/backend/urls/urls.dart';
 import 'package:justorderuser/common/custom_toast.dart';
 import 'package:justorderuser/modals/rest_menu.dart';
+import 'package:justorderuser/screens/explore/restaurant/bottomNavigation.dart';
 import 'package:justorderuser/screens/explore/restaurant/menu_details.dart';
+import 'package:justorderuser/screens/explore/restaurant/reviews.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -321,36 +323,63 @@ class _MenuTilesState extends State<MenuTiles> {
   ) async {
     SharedPreferences _prefs = await SharedPreferences.getInstance();
 
-    setState(() {
-      _isLoading = true;
-    });
     try {
       Map<String, dynamic> _thisData = {
-        'resturantId': restId == null ? '' : restId,
+        'restaurantId': restId == null ? '' : restId,
         'userId': _prefs.getString('CurrentUserId') ?? '',
         'menuId': menuId == null ? '' : menuId,
         'name': name == null ? '' : name,
-        'price': price == null ? '' : price,
-        'quantity': qnty == null ? '' : qnty,
+        'isSize': 'true',
+        'price': price == null ? '0.0' : price,
+        'quantity': qnty == null ? '0' : qnty,
       };
-      var cartResponse = await ResaurantsDataProvider.addtoCart(restId);
-      print(cartResponse);
-      if (!cartResponse) {
-        var ATCResponst = await HttpWrapper.sendPostRequest(
-            url: ADD_TO_CART, body: _thisData);
-        print(ATCResponst);
-        if (ATCResponst['success'] == true) {
-          CustomToast.showToast('Item Added to Cart');
-          Navigator.of(context).pop();
+      var checkCart = await HttpWrapper.sendGetRequest(url: GET_CART_ITEM);
+      if (checkCart['success'] == true) {
+        if ((checkCart['carts'] as List).isEmpty) {
+          addtoCartaftercheck(_thisData);
+        } else {
+          if ((checkCart['carts'][0]['cartItems'] as List).isNotEmpty) {
+            (checkCart['carts'][0]['cartItems'] as List).firstWhere((element) {
+              if (checkCart['carts'][0]['restaurantId'] == restId) {
+                addtoCartaftercheck(_thisData);
+              } else {
+                CustomToast.showToast('Please complete previous order first');
+              }
+              return true;
+            });
+          } else {
+            addtoCartaftercheck(_thisData);
+          }
         }
       } else {
-        CustomToast.showToast('Please complete previous order first.');
+        CustomToast.showToast(
+            'Unable to get cart information! try again later');
+
+        setState(() {
+          _isLoading = false;
+        });
       }
     } catch (e) {
       log(e.toString());
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  addtoCartaftercheck(Map<String, dynamic> _thisData) async {
+    var ATCResponst =
+        await HttpWrapper.sendPostRequest(url: ADD_TO_CART, body: _thisData);
+    print(ATCResponst);
+    if (ATCResponst['success'] == true) {
+      CustomToast.showToast('Item Added to Cart');
+      setState(() {
+        _isLoading = false;
+        Provider.of<ResaurantsDataProvider>(context, listen: false)
+            .loadCartItems();
+        Provider.of<Quantity>(context, listen: false).increaseQuantity();
+      });
+      Navigator.of(context).pop();
     }
   }
 
@@ -535,31 +564,40 @@ class _MenuTilesState extends State<MenuTiles> {
                         Row(
                           children: [
                             Expanded(
-                              child: ElevatedButton(
-                                style: TextButton.styleFrom(
-                                  backgroundColor: Colors.blue,
-                                ),
-                                onPressed: () {
-                                  // Navigator.of(context).push(MaterialPageRoute(
-                                  //     builder: (_) => Restaurantcart()));
-                                  print('Button is working');
-                                  addItemToCart(
-                                      widget.restId,
-                                      widget.id,
-                                      widget.title,
-                                      widget.price.toString(),
-                                      '2');
-                                },
-                                child: Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 10),
-                                  child: const Text(
-                                    'Add TO Cart',
-                                    style: TextStyle(
-                                        fontSize: 18, color: Colors.white),
-                                  ),
-                                ),
-                              ),
+                              child: _isLoading
+                                  ? Center(
+                                      child: CircularProgressIndicator(
+                                        color: Colors.blue,
+                                        backgroundColor: Colors.transparent,
+                                      ),
+                                    )
+                                  : ElevatedButton(
+                                      style: TextButton.styleFrom(
+                                        backgroundColor: Colors.blue,
+                                      ),
+                                      onPressed: () async {
+                                        setState(() {
+                                          _isLoading = true;
+                                        });
+                                        print('Button is working');
+                                        await addItemToCart(
+                                            widget.restId,
+                                            widget.id,
+                                            widget.title,
+                                            widget.price.toString(),
+                                            _quantity.toString());
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 10),
+                                        child: const Text(
+                                          'Add TO Cart',
+                                          style: TextStyle(
+                                              fontSize: 18,
+                                              color: Colors.white),
+                                        ),
+                                      ),
+                                    ),
                             ),
                           ],
                         ),

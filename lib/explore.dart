@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:justorderuser/backend/common/http_wrapper.dart';
@@ -9,10 +11,13 @@ import 'package:justorderuser/modals/hotel_detail.dart';
 import 'package:justorderuser/modals/restaurant_details.dart';
 import 'package:justorderuser/backend/providers/source_provider.dart';
 import 'package:justorderuser/backend/providers/restaurant_provider.dart';
+import 'package:justorderuser/screens/explore/hotels/hotel_functions.dart';
 import 'package:justorderuser/screens/explore/hotels/hotel_screen.dart';
 import 'package:justorderuser/screens/explore/restaurant/cart.dart';
 import 'package:justorderuser/screens/explore/restaurant/restaurant_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:badges/badges.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Explore extends StatefulWidget {
   Explore({Key? key}) : super(key: key);
@@ -23,6 +28,8 @@ class Explore extends StatefulWidget {
 
 class _ExploreState extends State<Explore> {
   List serviceList = [];
+  List _cartItems = [];
+
   bool loading = true;
 
   @override
@@ -31,7 +38,32 @@ class _ExploreState extends State<Explore> {
 
     getHotelsList();
     getRestaurants();
-    // loadServiceList();
+    loadCartItems();
+  }
+
+  loadCartItems() async {
+    var response = await FunctionsProvider.loadCartItems();
+    setState(() {
+      _cartItems = response;
+    });
+  }
+
+  getHotelsList() async {
+    var response = await FunctionsProvider.getHotelsList();
+    setState(() {
+      Provider.of<HotelDataProvider>(context, listen: false).hotelData =
+          response.map((e) => Hotel.fromJson(e)).toList();
+      loading = false;
+    });
+  }
+
+  getRestaurants() async {
+    var response = await FunctionsProvider.getRestaurants();
+    var data = response.map((e) => Restaurant.fromJson(e)).toList();
+    setState(() {
+      Provider.of<ResaurantsDataProvider>(context, listen: false)
+          .allRestaurants = data;
+    });
   }
 
   @override
@@ -45,26 +77,62 @@ class _ExploreState extends State<Explore> {
         child: Scaffold(
             backgroundColor: Colors.white,
             appBar: AppBar(
+              backgroundColor: Color(0XFF0F2C67),
               systemOverlayStyle: SystemUiOverlayStyle(
-                  statusBarIconBrightness: Brightness.dark,
+                  statusBarIconBrightness: Brightness.light,
                   statusBarColor: Colors.transparent),
               automaticallyImplyLeading: false,
-              title: Text("Explore", style: TextStyle(color: Colors.black)),
+              title: Text("Explore",
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 23)),
               iconTheme: IconThemeData(color: Colors.black),
               actions: [
-                IconButton(onPressed: () {}, icon: Icon(Icons.notifications)),
                 IconButton(
+                    onPressed: () {},
+                    icon: Icon(
+                      Icons.notifications,
+                      color: Colors.yellow,
+                    )),
+                Consumer<Quantity>(builder: (_, q, ch) {
+                  return IconButton(
                     onPressed: () {
                       Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => RestaurantCart()));
                     },
-                    icon: Icon(Icons.shopping_cart)),
+                    icon: q.orderQuantity == 0
+                        ? Icon(
+                            Icons.shopping_cart_outlined,
+                            color: Colors.white,
+                          )
+                        : Badge(
+                            child: Icon(
+                              Icons.shopping_cart,
+                              color: Colors.white,
+                            ),
+                            badgeColor: Colors.red,
+                            badgeContent: Text(
+                              q.orderQuantity.toString(),
+                              style:
+                                  TextStyle(fontSize: 12, color: Colors.white),
+                            ),
+                            position: BadgePosition(top: -15, end: -5),
+                          ),
+                  );
+                }),
+                const SizedBox(
+                  width: 10,
+                )
               ],
               bottom: TabBar(
-                  indicatorColor: Colors.green,
-                  labelColor: Colors.green,
-                  labelStyle: TextStyle(fontSize: 18),
-                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: Colors.white,
+                  indicatorWeight: 3,
+                  labelColor: Colors.white,
+                  labelStyle:
+                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  unselectedLabelColor: Colors.white,
+                  unselectedLabelStyle: TextStyle(fontSize: 16),
                   isScrollable: true,
                   tabs: [
                     Tab(
@@ -85,68 +153,5 @@ class _ExploreState extends State<Explore> {
             body: TabBarView(
               children: <Widget>[HotelsExplore(), RestaurantExplore()],
             )));
-  }
-
-  loadServiceList() async {
-    try {
-      var data = await ServiceProvider.otherServiceList();
-      print(data);
-      if (data['success'] == true) {
-        setState(() {
-          serviceList.addAll(data['items']);
-          loading = false;
-        });
-      } else {
-        CustomToast.showToast(data['message']);
-        setState(() {
-          serviceList.addAll([]);
-          loading = false;
-        });
-      }
-    } catch (e) {
-      print(e);
-      CustomToast.showToast("Something went wrong");
-    }
-  }
-
-  getHotelsList() async {
-    try {
-      var hotelData = await HttpWrapper.sendGetRequest(url: HOTEL_LISTS);
-      if (hotelData['success'] == true) {
-        var response = (hotelData['hotels'] as List);
-
-        setState(() {
-          Provider.of<HotelDataProvider>(context, listen: false).hotelData =
-              response.map((e) => Hotel.fromJson(e)).toList();
-          loading = false;
-        });
-      } else {
-        CustomToast.showToast(hotelData['message']);
-        setState(() {
-          loading = false;
-        });
-      }
-    } catch (e) {
-      print('Hotel Function Error : $e');
-    }
-  }
-
-  getRestaurants() async {
-    try {
-      var restaurantData =
-          await HttpWrapper.sendGetRequest(url: RESTAURANT_LISTS);
-      if (restaurantData['success'] == true) {
-        var response = restaurantData['restaurants'] as List;
-        var data = response.map((e) => Restaurant.fromJson(e)).toList();
-        setState(() {
-          Provider.of<ResaurantsDataProvider>(context, listen: false)
-              .allRestaurants = data;
-        });
-      } else {
-        CustomToast.showToast(restaurantData['message']);
-      }
-    } catch (e) {
-      print('Restaurant Function Error : $e');
-    }
   }
 }

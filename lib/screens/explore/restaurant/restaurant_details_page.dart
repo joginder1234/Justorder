@@ -21,6 +21,7 @@ class RestaurantDetailsPage extends StatefulWidget {
 
 class _RestaurantDetailsPageState extends State<RestaurantDetailsPage> {
   double rating = 4.4;
+  bool isFavt = false;
   @override
   Widget build(BuildContext context) {
     // var restId = ModalRoute.of(context)?.settings.arguments;
@@ -56,33 +57,13 @@ class _RestaurantDetailsPageState extends State<RestaurantDetailsPage> {
                         child: Column(
                           children: [
                             ListTile(
-                              title: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    restaurantDetails.restaurantName,
-                                    style: const TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  RatingBar(
-                                      ignoreGestures: true,
-                                      itemSize: 20,
-                                      initialRating: rating,
-                                      allowHalfRating: true,
-                                      maxRating: 5,
-                                      ratingWidget: RatingWidget(
-                                        full: Icon(Icons.star,
-                                            color: Colors.green),
-                                        half: Icon(Icons.star_half,
-                                            color: Colors.green),
-                                        empty: Icon(Icons.star_border_outlined,
-                                            color: Colors.green),
-                                      ),
-                                      onRatingUpdate: (value) {})
-                                ],
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(
+                                restaurantDetails.restaurantName,
+                                style: TextStyle(
+                                    color: Theme.of(context).buttonColor,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold),
                               ),
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,59 +170,56 @@ class _RestaurantDetailsPageState extends State<RestaurantDetailsPage> {
                                 ),
                               ],
                             ),
-                            const Divider(
-                              thickness: 1.5,
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              child: const Divider(
+                                thickness: 1.5,
+                              ),
+                            ),
+                            SizedBox(
+                              height: 80,
+                              width: MediaQuery.of(context).size.width,
+                              child: Column(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  restaurantActivityTile('Active Hour',
+                                      '7 am - 6 pm', Colors.black),
+                                  restaurantActivityTile('Phone', '8901111444',
+                                      Theme.of(context).buttonColor),
+                                  restaurantActivityTile(
+                                      'Email',
+                                      restaurantDetails.restaurantEmail,
+                                      Theme.of(context).buttonColor),
+                                ],
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              child: const Divider(
+                                thickness: 1.5,
+                              ),
                             ),
                             Container(
                               width: double.infinity,
-                              padding: const EdgeInsets.symmetric(vertical: 15),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     'Description :',
                                     style: TextStyle(
-                                        fontSize: 15,
+                                        color: Theme.of(context).buttonColor,
+                                        fontSize: 17,
                                         fontWeight: FontWeight.bold),
                                     textAlign: TextAlign.justify,
+                                  ),
+                                  const SizedBox(
+                                    height: 5,
                                   ),
                                   Text(
                                     restaurantDetails.description,
                                     textAlign: TextAlign.justify,
                                   ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            const Divider(
-                              thickness: 1.5,
-                            ),
-                            SizedBox(
-                              width: double.infinity,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Hot Deals',
-                                    style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  ListView.builder(
-                                      physics: NeverScrollableScrollPhysics(),
-                                      padding: EdgeInsets.zero,
-                                      scrollDirection: Axis.vertical,
-                                      itemCount:
-                                          restaurantDetails.coupons.length,
-                                      shrinkWrap: true,
-                                      itemBuilder: (ctx, i) => Offers(
-                                          restaurantDetails.coupons[i].offerId,
-                                          restaurantDetails
-                                                  .coupons[i].discount +
-                                              0.0,
-                                          restaurantDetails
-                                              .coupons[i].discountCode))
                                 ],
                               ),
                             ),
@@ -251,29 +229,49 @@ class _RestaurantDetailsPageState extends State<RestaurantDetailsPage> {
                     ],
                   ),
                   Positioned(
-                    top: MediaQuery.of(context).size.height * 0.45 - 22,
+                    top: MediaQuery.of(context).size.height * 0.45 - 45,
                     right: 25,
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-                      decoration: BoxDecoration(
-                        boxShadow: [
-                          BoxShadow(blurRadius: 3, color: Colors.black)
-                        ],
-                        color: Color(0xff03C86E),
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                      child: Text(
-                        '$rating / 5',
-                        style: TextStyle(
+                        padding: EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(blurRadius: 3, color: Colors.black)
+                          ],
                           color: Colors.white,
-                          fontSize: 16,
                         ),
-                      ),
-                    ),
+                        child: IconButton(
+                            onPressed: () {
+                              setState(() {
+                                isFavt = !isFavt;
+                              });
+                            },
+                            icon: isFavt
+                                ? Icon(
+                                    Icons.favorite,
+                                    color: Colors.red,
+                                  )
+                                : Icon(Icons.favorite_border_outlined,
+                                    color: Colors.black))),
                   ),
                 ],
               ),
             ),
+    );
+  }
+
+  Row restaurantActivityTile(String title, String subtitle, Color txtcolor) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        Text(subtitle,
+            style: TextStyle(
+                fontSize: 16, fontWeight: FontWeight.bold, color: txtcolor))
+      ],
     );
   }
 }

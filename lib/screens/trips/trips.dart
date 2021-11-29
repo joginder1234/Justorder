@@ -76,7 +76,7 @@ class _TripsState extends State<Trips> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        foregroundColor: Colors.black,
+        foregroundColor: Colors.white,
         title: Text('My Favourites'),
       ),
       body: _loading

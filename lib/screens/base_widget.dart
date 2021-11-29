@@ -60,14 +60,18 @@ class _BaseWidgetState extends State<BaseWidget> {
           onTap: _onTap,
           showSelectedLabels: true,
           showUnselectedLabels: true,
-          selectedItemColor: Colors.blue.shade700,
-          unselectedItemColor: Colors.black,
+          selectedItemColor: Color(0XFF0F2C67),
+          selectedLabelStyle:
+              TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          unselectedItemColor: Colors.grey,
           backgroundColor: Colors.white,
-          elevation: 0,
+          elevation: 10,
           type: BottomNavigationBarType.fixed,
           items: _icons
               .map((e) => BottomNavigationBarItem(
-                  icon: Icon(e.icon),
+                  icon: Icon(
+                    e.icon,
+                  ),
                   label: e.title,
                   backgroundColor: Colors.white))
               .toList()),

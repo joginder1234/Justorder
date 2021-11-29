@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:justorderuser/backend/common/http_wrapper.dart';
 import 'package:justorderuser/backend/providers/service.dart';
@@ -32,6 +33,7 @@ class _OtherServicesState extends State<OtherServices> {
       services = (response['items'] as List).map((e) => e).toList();
       setState(() {
         serviceId = services[0]['_id'];
+        selectedService = services[0]['name'];
       });
       loadOtherService(services[0]['_id']);
     }
@@ -61,11 +63,10 @@ class _OtherServicesState extends State<OtherServices> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        foregroundColor: Colors.black,
+        foregroundColor: Colors.white,
         title: Text(
           'Services List',
         ),
-        centerTitle: true,
       ),
       body: Column(
         children: [
@@ -89,8 +90,8 @@ class _OtherServicesState extends State<OtherServices> {
                         padding: const EdgeInsets.symmetric(horizontal: 5),
                         child: Chip(
                             backgroundColor: services[i]['_id'] == serviceId
-                                ? Colors.blue
-                                : Colors.black,
+                                ? Color(0XFF0F2C67)
+                                : Colors.grey.shade500,
                             labelPadding: EdgeInsets.symmetric(
                                 horizontal: 15, vertical: 5),
                             label: Text(
@@ -114,51 +115,45 @@ class _OtherServicesState extends State<OtherServices> {
                 : otherServices.isEmpty
                     ? Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('No Service Available for'),
-                          Text(
-                            selectedService,
-                            style: TextStyle(fontSize: 25, color: Colors.grey),
-                          ),
-                        ],
+                        children: [Text('No Service Available')],
                       )
                     : ListView.builder(
                         itemCount: otherServices.length,
                         shrinkWrap: true,
-                        itemBuilder: (ctx, i) => Column(
-                              children: [
-                                ListTile(
-                                  // tileColor: i.isEven
-                                  //     ? Colors.blue.shade100
-                                  //     : Colors.blue.shade200,
-                                  title: Text(
-                                    otherServices[i]['name'],
-                                    style: GoogleFonts.oswald(fontSize: 20),
-                                  ),
-                                  trailing: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      (otherServices[i]['region'] == 'null' ||
-                                                  otherServices[i]['region'] ==
-                                                      null) &&
-                                              (otherServices[i]['city'] ==
-                                                      'null' ||
-                                                  otherServices[i]['city'] ==
-                                                      null)
-                                          ? SizedBox()
-                                          : Text(
-                                              '${otherServices[i]['region'] == 'null' || otherServices[i]['region'] == null ? '' : '${otherServices[i]['region']},'} ${otherServices[i]['city'] == 'null' || otherServices[i]['city'] == null ? '' : '${otherServices[i]['city']}'}'),
-                                      Text('${otherServices[i]['country']}'),
-                                    ],
-                                  ),
+                        itemBuilder: (ctx, i) => Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 15, vertical: 5),
+                              child: ListTile(
+                                shape: Border.all(color: Colors.grey.shade200),
+                                tileColor: Colors.white,
+                                leading: selectedService == 'Gym'
+                                    ? FaIcon(FontAwesomeIcons.dumbbell)
+                                    : selectedService == 'Swimming Pool'
+                                        ? FaIcon(FontAwesomeIcons.swimmingPool)
+                                        : FaIcon(FontAwesomeIcons.star),
+                                title: Text(
+                                  otherServices[i]['name'],
+                                  style: GoogleFonts.oswald(
+                                      fontSize: 20, color: Color(0XFF0F2C67)),
                                 ),
-                                otherServices.length > 1
-                                    ? Divider(
-                                        thickness: 1.2,
-                                      )
-                                    : Container()
-                              ],
+                                trailing: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    (otherServices[i]['region'] == 'null' ||
+                                                otherServices[i]['region'] ==
+                                                    null) &&
+                                            (otherServices[i]['city'] ==
+                                                    'null' ||
+                                                otherServices[i]['city'] ==
+                                                    null)
+                                        ? SizedBox()
+                                        : Text(
+                                            '${otherServices[i]['region'] == 'null' || otherServices[i]['region'] == null ? '' : '${otherServices[i]['region']},'} ${otherServices[i]['city'] == 'null' || otherServices[i]['city'] == null ? '' : '${otherServices[i]['city']}'}'),
+                                    Text('${otherServices[i]['country']}'),
+                                  ],
+                                ),
+                              ),
                             )),
           )
         ],

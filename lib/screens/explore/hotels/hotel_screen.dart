@@ -4,7 +4,9 @@ import 'package:justorderuser/backend/providers/source_provider.dart';
 import 'package:justorderuser/backend/urls/urls.dart';
 import 'package:justorderuser/common/custom_toast.dart';
 import 'package:justorderuser/modals/hotel_detail.dart';
+import 'package:justorderuser/modals/rooms_details.dart';
 import 'package:justorderuser/screens/explore/hotels/hotel_details.dart';
+import 'package:justorderuser/screens/explore/hotels/hotel_functions.dart';
 import 'package:justorderuser/widgets/hotel_tiles.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,12 +22,11 @@ class _HotelsExploreState extends State<HotelsExplore> {
   bool loading = true;
   TextEditingController _searchController = TextEditingController();
   List<Hotel> _searchHotel = [];
-
   List fvtHotel = [];
+  List<RoomsData> rooms = [];
 
   @override
   void dispose() {
-    // TODO: implement dispose
     super.dispose();
     TextEditingController().dispose();
   }
@@ -35,6 +36,7 @@ class _HotelsExploreState extends State<HotelsExplore> {
     super.initState();
   }
 
+  //// While Searching for custom Hotels
   onSearching(String value, List<Hotel> hotelList) {
     setState(() {
       _searchHotel = hotelList
@@ -44,22 +46,13 @@ class _HotelsExploreState extends State<HotelsExplore> {
     });
   }
 
+  //// getting reviews
   getallReviews(String hotelId) async {
-    try {
-      var reviews =
-          await HttpWrapper.sendGetRequest(url: ALL_REVIEWS + '/$hotelId');
-
-      if (reviews['success'] == true) {
-        setState(() {
-          Provider.of<HotelDataProvider>(context, listen: false)
-              .setreviewList((reviews['reviews']));
-        });
-      } else {
-        CustomToast.showToast(reviews['message']);
-      }
-    } catch (e) {
-      print('function Error : $e');
-    }
+    var response = FunctionsProvider.getallReviews(hotelId);
+    setState(() {
+      Provider.of<HotelDataProvider>(context, listen: false)
+          .setreviewList((response));
+    });
   }
 
   removeFavourite(String id) async {
@@ -69,13 +62,14 @@ class _HotelsExploreState extends State<HotelsExplore> {
         print(value);
       });
     } catch (e) {
-      print(e);
+      CustomToast.showToast(e.toString());
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final hotelDetails = Provider.of<HotelDataProvider>(context).hotelData;
+    final roomsList = Provider.of<HotelDataProvider>(context).roomsList;
 
     return GestureDetector(
       onTap: () {

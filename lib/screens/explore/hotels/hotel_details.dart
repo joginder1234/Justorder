@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -6,10 +8,12 @@ import 'package:justorderuser/backend/common/http_wrapper.dart';
 import 'package:justorderuser/backend/providers/source_provider.dart';
 import 'package:justorderuser/backend/urls/urls.dart';
 import 'package:justorderuser/common/custom_toast.dart';
+import 'package:justorderuser/modals/hotel_detail.dart';
 import 'package:justorderuser/modals/rooms_details.dart';
+import 'package:justorderuser/screens/explore/hotels/hotel_functions.dart';
 import 'package:justorderuser/screens/explore/hotels/hotel_rooms.dart';
 import 'package:justorderuser/screens/explore/hotels/reviews_screen.dart';
-import 'package:justorderuser/widgets/features.dart';
+import 'package:justorderuser/widgets/features.dart' as feature;
 import 'package:justorderuser/widgets/review_tile.dart';
 import 'package:provider/provider.dart';
 
@@ -30,7 +34,6 @@ class _HotelDetailsState extends State<HotelDetailsScreen> {
         .hotelData
         .firstWhere((element) => element.id == hotelId);
     final reviewsData = Provider.of<HotelDataProvider>(context).reviewsList;
-    print('Data of reviews : ${reviewsData}');
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -41,8 +44,7 @@ class _HotelDetailsState extends State<HotelDetailsScreen> {
           body: CustomScrollView(
             slivers: [
               SliverAppBar(
-                backgroundColor: Colors.brown.shade400,
-                foregroundColor: Colors.black,
+                foregroundColor: Colors.white,
                 systemOverlayStyle: SystemUiOverlayStyle(
                     statusBarIconBrightness: Brightness.light),
                 expandedHeight: MediaQuery.of(context).size.height * 0.4,
@@ -98,7 +100,8 @@ class _HotelDetailsState extends State<HotelDetailsScreen> {
                                             '${hotelDetailsData.hotelDetail.city}, ${hotelDetailsData.hotelDetail.region}',
                                             style: GoogleFonts.robotoCondensed(
                                                 fontSize: 18,
-                                                color: Colors.grey.shade800),
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0XFF0F2C67)),
                                           )
                                         ],
                                       ),
@@ -107,31 +110,11 @@ class _HotelDetailsState extends State<HotelDetailsScreen> {
                                 ],
                               ),
                             ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  'Rooms from',
-                                  style: GoogleFonts.robotoCondensed(
-                                      color: Colors.grey),
-                                ),
-                                Text(
-                                  '\$ 160',
-                                  style: GoogleFonts.robotoCondensed(
-                                      fontSize: 25,
-                                      fontWeight: FontWeight.w700),
-                                ),
-                                Text(
-                                  '/per night',
-                                  style:
-                                      GoogleFonts.robotoCondensed(fontSize: 18),
-                                ),
-                              ],
-                            )
+                            roomPerNIghtWidget()
                           ],
                         ),
                       ),
-                      HotelFeatures(
+                      feature.HotelFeatures(
                           parking: hotelDetailsData.services.parking,
                           balcony: hotelDetailsData.services.balcony,
                           bed: hotelDetailsData.services.bed,
@@ -141,7 +124,9 @@ class _HotelDetailsState extends State<HotelDetailsScreen> {
                       ),
                       Text('About Hotel',
                           style: GoogleFonts.robotoCondensed(
-                              fontSize: 18, fontWeight: FontWeight.w500)),
+                              color: Color(0XFF0F2C67),
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700)),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         child: Text(
@@ -158,7 +143,9 @@ class _HotelDetailsState extends State<HotelDetailsScreen> {
                           children: [
                             Text('Location Detail',
                                 style: GoogleFonts.robotoCondensed(
-                                    fontSize: 18, fontWeight: FontWeight.w500)),
+                                    color: Color(0XFF0F2C67),
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700)),
                             SizedBox(
                               height: 10,
                             ),
@@ -243,74 +230,14 @@ class _HotelDetailsState extends State<HotelDetailsScreen> {
                                 },
                                 child: Text(
                                   'View Rooms',
-                                  style:
-                                      GoogleFonts.robotoCondensed(fontSize: 20),
+                                  style: GoogleFonts.robotoCondensed(
+                                      fontSize: 20, color: Color(0XFF0F2C67)),
                                 ))
                           ],
                         ),
                       ),
                       Divider(),
-                      SizedBox(
-                        width: double.infinity,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      'Reviews',
-                                      style: GoogleFonts.robotoCondensed(
-                                          fontSize: 19,
-                                          fontWeight: FontWeight.w600),
-                                    ),
-                                    SizedBox(
-                                      width: 10,
-                                    ),
-                                    Text(
-                                      '(${reviewsData.length})',
-                                      style: TextStyle(fontSize: 16),
-                                    )
-                                  ],
-                                ),
-                                TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context).push(
-                                          MaterialPageRoute(builder: (ctx) {
-                                        return HotelReviewsScreen(
-                                            hotelDetailsData.services.rating +
-                                                0.0,
-                                            hotelDetailsData.id);
-                                      }));
-                                    },
-                                    child: Row(
-                                      children: [
-                                        Text(
-                                          'View All',
-                                          style: GoogleFonts.robotoCondensed(
-                                              fontSize: 18),
-                                        ),
-                                        Icon(
-                                          Icons.arrow_right_outlined,
-                                          size: 25,
-                                        )
-                                      ],
-                                    ))
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                ratingBar(
-                                    hotelDetailsData.services.rating + 0.0),
-                                Text(
-                                    '(${hotelDetailsData.services.rating} / 5)')
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+                      reviewBarWidget(reviewsData, context, hotelDetailsData),
                       ListView.builder(
                         padding: EdgeInsets.zero,
                         shrinkWrap: true,
@@ -331,6 +258,93 @@ class _HotelDetailsState extends State<HotelDetailsScreen> {
               ]))
             ],
           )),
+    );
+  }
+
+  Column roomPerNIghtWidget() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          'Rooms from',
+          style: GoogleFonts.robotoCondensed(color: Colors.grey),
+        ),
+        Text(
+          '\$ 160',
+          style: GoogleFonts.robotoCondensed(
+              color: Color(0XFF0F2C67),
+              fontSize: 25,
+              fontWeight: FontWeight.w700),
+        ),
+        Text(
+          '/per night',
+          style: GoogleFonts.robotoCondensed(fontSize: 18),
+        ),
+      ],
+    );
+  }
+
+  SizedBox reviewBarWidget(
+      List<dynamic> reviewsData, BuildContext context, Hotel hotelDetailsData) {
+    return SizedBox(
+      width: double.infinity,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    'Reviews',
+                    style: GoogleFonts.robotoCondensed(
+                        color: Color(0XFF0F2C67),
+                        fontSize: 19,
+                        fontWeight: FontWeight.w600),
+                  ),
+                  SizedBox(
+                    width: 10,
+                  ),
+                  Text(
+                    '(${reviewsData.length})',
+                    style: TextStyle(fontSize: 16),
+                  )
+                ],
+              ),
+              TextButton(
+                  onPressed: () {
+                    Navigator.of(context)
+                        .push(MaterialPageRoute(builder: (ctx) {
+                      return HotelReviewsScreen(
+                          hotelDetailsData.services.rating + 0.0,
+                          hotelDetailsData.id);
+                    }));
+                  },
+                  child: Row(
+                    children: [
+                      Text(
+                        'View All',
+                        style: GoogleFonts.robotoCondensed(
+                            fontSize: 18, color: Color(0XFF0F2C67)),
+                      ),
+                      Icon(
+                        Icons.arrow_right_outlined,
+                        color: Colors.red,
+                        size: 25,
+                      )
+                    ],
+                  ))
+            ],
+          ),
+          Row(
+            children: [
+              ratingBar(hotelDetailsData.services.rating + 0.0),
+              Text('(${hotelDetailsData.services.rating} / 5)')
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -356,71 +370,13 @@ class _HotelDetailsState extends State<HotelDetailsScreen> {
         onRatingUpdate: (_) {});
   }
 
+  //// Getting List of related hotel
   getRoomsList(String hotelId) async {
-    try {
-      var hotelRoomsData =
-          await HttpWrapper.sendGetRequest(url: HOTEL_ROOMS_LIST + '/$hotelId');
-      if (hotelRoomsData['success'] == true) {
-        print(hotelRoomsData['room']);
-        (hotelRoomsData['rooms'] as List).forEach((element) {
-          print("room elements: $element");
-          setState(() {
-            Provider.of<HotelDataProvider>(context, listen: false)
-                .setRoomsData(RoomsData.fromJson(element));
-          });
-        });
-      } else {
-        CustomToast.showToast(hotelRoomsData['message']);
-      }
-    } catch (e) {
-      print('Function Error : $e');
-    }
-  }
-}
-
-class ImageTiles extends StatelessWidget {
-  final String imageUrl;
-  ImageTiles(this.imageUrl);
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        showDialog(
-            context: context,
-            builder: (ctx) => SimpleDialog(
-                  backgroundColor: Colors.white,
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(5),
-                      width: MediaQuery.of(context).size.width,
-                      child: ClipRRect(
-                        child: GestureDetector(
-                            onTap: () {
-                              Navigator.of(context).pop();
-                            },
-                            child: Image(image: NetworkImage(imageUrl))),
-                      ),
-                    )
-                  ],
-                ));
-      },
-      child: Container(
-        margin: EdgeInsets.all(5),
-        height: 90,
-        width: 130,
-        decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            color: Colors.white,
-            boxShadow: [BoxShadow(color: Colors.grey.shade500, blurRadius: 3)]),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: Image(
-            image: NetworkImage(imageUrl),
-            fit: BoxFit.cover,
-          ),
-        ),
-      ),
-    );
+    var response = await FunctionsProvider.getRoomsList(hotelId);
+    log('Room Data :: $response');
+    setState(() {
+      Provider.of<HotelDataProvider>(context, listen: false)
+          .setRoomsData(RoomsData.fromJson(response));
+    });
   }
 }

@@ -101,6 +101,7 @@ class _SignupScreenState extends State<SignupScreen> {
           "address": address.text.trim(),
         };
         var isLoginSuccess = await AuthProvider.singUp(body);
+
         if (isLoginSuccess) {
           setState(() {
             _isLoading = false;

@@ -33,8 +33,6 @@ class _RestaurantExploreState extends State<RestaurantExplore> {
         Provider.of<ResaurantsDataProvider>(context, listen: false)
             .allRestaurants;
 
-    print("Restaurants Data List :: $restaurantsList");
-
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -144,7 +142,10 @@ class _RestaurantExploreState extends State<RestaurantExplore> {
                                     Text(_searchRestaurant[i].restaurantName),
                                 subtitle: Text(
                                     _searchRestaurant[i].restaurantAddress),
-                                trailing: Icon(Icons.navigate_next))),
+                                trailing: Icon(
+                                  Icons.navigate_next,
+                                  color: Color(0XFF0F2C67),
+                                ))),
                       )
               ]),
       ),
