@@ -22,10 +22,9 @@ class _ChangePasswordState extends State<ChangePassword> {
       appBar: AppBar(
           title: Text(
             "Change Password",
-            style: TextStyle(color: Colors.black),
           ),
           elevation: 0,
-          iconTheme: IconThemeData(color: Colors.black)),
+          iconTheme: IconThemeData(color: Colors.white)),
       body: SingleChildScrollView(
         child: Form(
           key: _key,
@@ -44,7 +43,7 @@ class _ChangePasswordState extends State<ChangePassword> {
                   decoration: _isLoading
                       ? BoxDecoration()
                       : BoxDecoration(
-                          color: Colors.blue,
+                          color: Theme.of(context).buttonColor,
                           borderRadius: BorderRadius.circular(5)),
                   child: _isLoading
                       ? Center(

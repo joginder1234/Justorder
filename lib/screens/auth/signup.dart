@@ -25,7 +25,7 @@ class _SignupScreenState extends State<SignupScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         iconTheme: IconThemeData(color: Colors.black),
-        title: Text("Sign up", style: TextStyle(color: Colors.black)),
+        title: Text("Sign up", style: TextStyle(color: Colors.white)),
       ),
       body: SingleChildScrollView(
           child: Form(

@@ -2,15 +2,25 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:justorderuser/backend/urls/urls.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FlutterStripePayment {
   static Future createPaymentIntent(double amount, String currency, String name,
       String line1, String postal, String phone, String country) async {
-    const url = "http://7e74-103-240-193-34.ngrok.io/create-payment-intent";
-    http.Response response = await http.post(Uri.parse(url), body: {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    const url = PAYMENT_INTENT;
+    var headers = {
+      'x-access-token': prefs.getString('x-access-token') == null
+          ? ''
+          : prefs.getString('x-access-token') as String,
+    };
+
+    http.Response response =
+        await http.post(Uri.parse(url), headers: headers, body: {
       "amount": amount.toString(),
       "currency": currency,
-      "description": "Royal Dhaba $name $phone $postal",
+      "description": "JustOrder $name $phone $postal",
       "name": name,
       "line1": line1,
       "postal_code": postal,
@@ -30,10 +40,17 @@ class FlutterStripePayment {
   }
 
   static Future getTransactions(dynamic data1) async {
-    const url = "http://7e74-103-240-193-34.ngrok.io/confirm-payment";
+    SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    http.Response response =
-        await http.post(Uri.parse(url), body: {'data': data1});
+    const url = GET_TRANSACTION;
+
+    var headers = {
+      'x-access-token': prefs.getString('x-access-token') == null
+          ? ''
+          : prefs.getString('x-access-token') as String,
+    };
+    http.Response response = await http
+        .post(Uri.parse(url), headers: headers, body: {'data': data1});
 
     if (response.statusCode == 200) {
       var data = json.decode(response.body);

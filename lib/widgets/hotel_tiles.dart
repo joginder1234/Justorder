@@ -7,6 +7,7 @@ import 'package:justorderuser/backend/urls/urls.dart';
 import 'package:justorderuser/common/custom_toast.dart';
 import 'package:justorderuser/backend/providers/source_provider.dart';
 import 'package:justorderuser/screens/explore/hotels/hotel_details.dart';
+import 'package:justorderuser/screens/explore/hotels/hotel_functions.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,12 +16,11 @@ class HotelTiles extends StatefulWidget {
   final String hotelId;
   final String hotelImage;
   final String hotelName;
-  final double price;
   final String hotelAddress;
   final double hotelRatings;
   final Function onDelete;
-  HotelTiles(this.hotelId, this.hotelImage, this.hotelName, this.price,
-      this.hotelAddress, this.hotelRatings, this.onDelete);
+  HotelTiles(this.hotelId, this.hotelImage, this.hotelName, this.hotelAddress,
+      this.hotelRatings, this.onDelete);
 
   @override
   State<HotelTiles> createState() => _HotelTilesState();
@@ -30,10 +30,14 @@ class _HotelTilesState extends State<HotelTiles> {
   bool _isFavorite = false;
   String userId = '';
   Map<String, dynamic> thisHotel = {};
+  bool loadingPrice = false;
+
+  double price = 0.0;
   @override
   void initState() {
     super.initState();
     getFavouriteList();
+    getRoomPrice(widget.hotelId);
   }
 
   getFavouriteList() async {
@@ -91,10 +95,34 @@ class _HotelTilesState extends State<HotelTiles> {
     }
   }
 
+  getRoomPrice(String hotelId) async {
+    setState(() {
+      loadingPrice = true;
+    });
+    var roomsList = await FunctionsProvider.getRoomsList(hotelId);
+    var priceList = (roomsList as List).map((e) => e['type']).toList();
+    var tprice = priceList.reduce((value, element) =>
+        value['Price'] < element['Price'] ? value : element)['Price'];
+    if (mounted) {
+      setState(() {
+        price = double.parse(tprice.toString());
+
+        loadingPrice = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          Provider.of<HotelDataProvider>(context, listen: false).hotelPrice =
+              price;
+        });
         getallReviews(widget.hotelId);
         Navigator.of(context).pushNamed(HotelDetailsScreen.hotelDetailRoute,
             arguments: widget.hotelId);
@@ -158,11 +186,17 @@ class _HotelTilesState extends State<HotelTiles> {
                           //   size: 25,
                           //   color: Colors.grey,
                           // ),
-                          Text(
-                            '\$${widget.price}',
-                            style: GoogleFonts.robotoCondensed(
-                                fontSize: 25, fontWeight: FontWeight.w600),
-                          ),
+                          loadingPrice
+                              ? Image(
+                                  image: AssetImage('assets/priceLoad.gif'),
+                                  width: 90,
+                                )
+                              : Text(
+                                  '\$$price',
+                                  style: GoogleFonts.robotoCondensed(
+                                      fontSize: 25,
+                                      fontWeight: FontWeight.w600),
+                                ),
                         ],
                       ),
                       Expanded(

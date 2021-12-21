@@ -6,6 +6,7 @@ import 'package:justorderuser/backend/providers/source_provider.dart';
 import 'package:justorderuser/backend/providers/restaurant_provider.dart';
 import 'package:justorderuser/screens/explore/hotels/hotel_details.dart';
 import 'package:justorderuser/screens/explore/hotels/hotel_rooms.dart';
+import 'package:justorderuser/screens/explore/restaurant/food_options.dart';
 import 'package:justorderuser/screens/explore/restaurant/menu_details.dart';
 import 'package:justorderuser/screens/order_history/booking_history_details.dart';
 import 'package:justorderuser/screens/order_history/restaurant_orders.dart';
@@ -48,6 +49,7 @@ class MyApp extends StatelessWidget {
           BookingHistoryDetails.bookingHistoryRoute: (ctx) =>
               BookingHistoryDetails(),
           RestaurantOrders.restOrderRoute: (ctx) => RestaurantOrders(),
+          RestaurantItem.restaurantItemRoute: (ctx) => RestaurantItem(),
 
           // HotelReviewsScreen.hotelReviewsRoute: (ctx) => HotelReviewsScreen(),
         },

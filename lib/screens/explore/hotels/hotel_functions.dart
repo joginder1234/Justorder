@@ -92,8 +92,8 @@ class FunctionsProvider {
       var hotelRoomsData =
           await HttpWrapper.sendGetRequest(url: HOTEL_ROOMS_LIST + '/$hotelId');
       if (hotelRoomsData['success'] == true) {
-        print('Hotel Data Rooms :: ${hotelRoomsData['hotelId']}');
-        return hotelRoomsData['rooms'][0];
+        log(hotelRoomsData.toString());
+        return hotelRoomsData['rooms'];
       } else {
         CustomToast.showToast(hotelRoomsData['message']);
         return null;

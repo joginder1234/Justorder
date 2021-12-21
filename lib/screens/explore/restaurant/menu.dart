@@ -1,9 +1,11 @@
 import 'dart:developer';
 
+import 'package:expansion_tile_card/expansion_tile_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:group_radio_button/group_radio_button.dart';
 import 'package:justorderuser/backend/common/http_wrapper.dart';
 import 'package:justorderuser/backend/providers/restaurant_provider.dart';
@@ -11,6 +13,7 @@ import 'package:justorderuser/backend/urls/urls.dart';
 import 'package:justorderuser/common/custom_toast.dart';
 import 'package:justorderuser/modals/rest_menu.dart';
 import 'package:justorderuser/screens/explore/restaurant/bottomNavigation.dart';
+import 'package:justorderuser/screens/explore/restaurant/food_options.dart';
 import 'package:justorderuser/screens/explore/restaurant/menu_details.dart';
 import 'package:justorderuser/screens/explore/restaurant/reviews.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
@@ -117,154 +120,88 @@ class _RestaurantMenuPageState extends State<RestaurantMenuPage> {
 
     return Scaffold(
         backgroundColor: Colors.grey.shade200,
-        body: Padding(
-          padding: const EdgeInsets.only(top: 40),
-          child: _isLoading
-              ? Center(
-                  child: CircularProgressIndicator(),
-                )
-              : Column(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.only(top: 20, left: 15, right: 15),
-                      color: Colors.grey.shade200,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Menu Categories',
-                                style: TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.orange,
-                                    fontWeight: FontWeight.w700),
-                              ),
-                              filterCategory == ''
-                                  ? Container(
-                                      height: 48,
-                                    )
-                                  : TextButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          filterCategory = '';
-                                        });
-                                      },
-                                      child: Text(
-                                        'Show All',
-                                        style: TextStyle(fontSize: 18),
-                                      ))
-                            ],
-                          ),
-                          const Divider(
-                            thickness: 1.5,
-                          ),
-                          Container(
-                            color: Colors.grey.shade200,
-                            height: 135,
-                            width: double.infinity,
-                            child: ListView.builder(
-                                padding: EdgeInsets.symmetric(horizontal: 0),
-                                scrollDirection: Axis.horizontal,
-                                shrinkWrap: true,
-                                itemCount: _category.length,
-                                itemBuilder: (context, index) =>
-                                    GestureDetector(
-                                      onTap: () {
-                                        filterMenuList(_category[index]['_id']);
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(15.0),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          children: [
-                                            CircleAvatar(
-                                              maxRadius: 35,
-                                              backgroundImage:
-                                                  NetworkImage(menuImage),
-                                            ),
-                                            Container(
-                                              padding: EdgeInsets.only(top: 5),
-                                              alignment: Alignment.center,
-                                              width: 55,
-                                              child: Text(
-                                                _category[index]
-                                                    ['categoryName'],
-                                                overflow: TextOverflow.fade,
-                                                softWrap: true,
-                                                maxLines: 2,
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 14),
-                                              ),
-                                            )
-                                          ],
-                                        ),
-                                      ),
-                                    )),
-                          ),
-                          const Divider(
-                            thickness: 2,
-                          ),
-                          Text('All Menu',
-                              style: TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.orange,
-                                  fontWeight: FontWeight.w700)),
-                          const SizedBox(
-                            height: 10,
-                          )
-                        ],
-                      ),
-                    ),
-                    Container(
-                      height: MediaQuery.of(context).size.height * 0.61,
-                      child: filterCategory == ''
-                          ? ListView.builder(
-                              padding: EdgeInsets.all(15),
-                              scrollDirection: Axis.vertical,
-                              shrinkWrap: true,
-                              itemCount: _menuList.length,
-                              itemBuilder: (context, index) => MenuTiles(
-                                (_menuList[index]['options'] as List).length <=
-                                        0
-                                    ? ''
-                                    : _menuList[index]['options'][0]
-                                            ['optionId'] ??
-                                        '',
-                                _menuList[index]['restaurantId'],
-                                _menuList[index]['_id'],
-                                _menuList[index]['imageUrl'],
-                                _menuList[index]['name'] ?? '',
-                                _menuList[index]['description'],
-                                _menuList[index]['price'] == null
-                                    ? 0.0
-                                    : _menuList[index]['price'] + 0.0,
-                              ),
-                            )
-                          : ListView.builder(
-                              padding: EdgeInsets.all(15),
-                              scrollDirection: Axis.vertical,
-                              shrinkWrap: true,
-                              itemCount: _filterMenu.length,
-                              itemBuilder: (context, index) => MenuTiles(
-                                _filterMenu[index]['options'][0]['optionId'] ??
-                                    '',
-                                _filterMenu[index]['restaurantId'],
-                                _filterMenu[index]['_id'],
-                                _filterMenu[index]['imageUrl'],
-                                _filterMenu[index]['name'] ?? '',
-                                _filterMenu[index]['description'],
-                                double.parse(
-                                    _filterMenu[index]['price'].toString()),
+        appBar: AppBar(
+          title: Text('Choose your meal'),
+        ),
+        body: _isLoading
+            ? Center(
+                child: CircularProgressIndicator(),
+              )
+            : Column(
+                children: [
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  ListView.builder(
+                    itemCount: _category.length,
+                    shrinkWrap: true,
+                    itemBuilder: (BuildContext context, int i) {
+                      return Container(
+                          margin:
+                              EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                          decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                    color: Colors.grey.shade400, blurRadius: 5)
+                              ],
+                              borderRadius: BorderRadius.circular(10),
+                              image: DecorationImage(
+                                  fit: BoxFit.cover,
+                                  image: AssetImage('assets/bg.jpg'))),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          child: SingleChildScrollView(
+                            child: Center(
+                              child: ExpansionTileCard(
+                                contentPadding: EdgeInsets.symmetric(
+                                    vertical: 15, horizontal: 35),
+                                baseColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                elevation: 0,
+                                trailing: Icon(
+                                  Icons.arrow_drop_down,
+                                  color: Colors.transparent,
+                                ),
+                                title: SizedBox(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.6,
+                                  child: Text(_category[i]['categoryName'],
+                                      maxLines: 2,
+                                      softWrap: true,
+                                      textAlign: TextAlign.center,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.kaushanScript(
+                                          fontSize: 25,
+                                          color:
+                                              Theme.of(context).buttonColor)),
+                                ),
+                                children: _menuList
+                                    .where((element) =>
+                                        element['categoryId'] ==
+                                        _category[i]['_id'])
+                                    .toList()
+                                    .map((e) => MenuTiles(
+                                          (e['options'] as List).length <= 0
+                                              ? ''
+                                              : e['options'][0]['optionId'] ??
+                                                  '',
+                                          e['restaurantId'],
+                                          e['_id'],
+                                          e['imageUrl'],
+                                          e['name'] ?? '',
+                                          e['description'],
+                                          e['price'] == null
+                                              ? 0.0
+                                              : e['price'] + 0.0,
+                                        ))
+                                    .toList(),
                               ),
                             ),
-                    ),
-                  ],
-                ),
-        ));
+                          ));
+                    },
+                  ),
+                ],
+              ));
   }
 }
 
@@ -296,6 +233,7 @@ class _MenuTilesState extends State<MenuTiles> {
   int _quantity = 1;
   String radioValue = '';
   List<String> _itemSize = ['Small', 'Medium', 'Large'];
+  String optId = '';
 
   bool _isLoading = false;
 
@@ -307,7 +245,13 @@ class _MenuTilesState extends State<MenuTiles> {
           await HttpWrapper.sendGetRequest(url: GET_MENU_OPTIONS + '/$optId');
 
       if (optionData['success'] == true) {
-        print(optionData);
+        print('Option :: ${optionData['options']}');
+
+        Provider.of<ResaurantsDataProvider>(context, listen: false)
+            .foodOptions = optionData['options'][0]['opt'];
+        setState(() {
+          optId = optionData['options'][0]['_id'];
+        });
       }
     } catch (e) {
       log(e.toString());
@@ -389,241 +333,232 @@ class _MenuTilesState extends State<MenuTiles> {
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: ListTile(
         tileColor: Colors.white,
-        onTap: () {
-          loadOptions(widget.id);
-          showModalBottomSheet(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(25),
-                      topRight: Radius.circular(25))),
-              isScrollControlled: true,
-              // expand: true,
-              enableDrag: true,
-              context: context,
-              builder: (ctx) {
-                return StatefulBuilder(builder: (BuildContext ctx, setState) {
-                  return Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20),
-                          child: Container(
-                              height: 150,
-                              width: 150,
-                              decoration: BoxDecoration(shape: BoxShape.circle),
-                              child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(1000),
-                                  child: Image(
-                                    image: NetworkImage(widget.image),
-                                    fit: BoxFit.cover,
-                                  ))),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              widget.title,
-                              style: TextStyle(
-                                  fontSize: 25, fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(height: 10),
-                            Text('\$${widget.price + 0.0}',
-                                style: TextStyle(
-                                    fontSize: 25,
-                                    color: Colors.orange.shade800,
-                                    fontWeight: FontWeight.w800)),
-                          ],
-                        ),
-                        const SizedBox(
-                          height: 20,
-                        ),
-                        SizedBox(
-                          width: double.infinity,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Description:',
-                                style: TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(
-                                height: 5,
-                              ),
-                              Text(
-                                widget.description,
-                                style:
-                                    TextStyle(color: Colors.grey, fontSize: 16),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(
-                          height: 20,
-                        ),
-                        Card(
-                          child: RadioGroup<String>.builder(
-                              direction: Axis.horizontal,
-                              groupValue: radioValue,
-                              onChanged: (value) {
-                                setState(() {
-                                  radioValue = value.toString();
-                                });
-                              },
-                              items: _itemSize,
-                              itemBuilder: (i) {
-                                return RadioButtonBuilder(i.toString(),
-                                    textPosition: RadioButtonTextPosition.left);
-                              }),
-                        ),
-                        SizedBox(
-                          height: 30,
-                        ),
-                        Row(
-                          children: [
-                            Text(
-                              'Quantity',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w800, fontSize: 17),
-                            ),
-                            SizedBox(
-                              width: 20,
-                            ),
-                            Container(
-                                width: 30,
-                                height: 30,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.grey,
-                                ),
-                                child: FloatingActionButton(
-                                  child: Icon(
-                                    Icons.remove,
-                                    color: Colors.white,
-                                  ),
-                                  onPressed: () {
-                                    if (_quantity > 1) {
-                                      setState(() {
-                                        _quantity--;
-                                      });
-                                    }
-                                  },
-                                )),
-                            Text(
-                              '  $_quantity  ',
-                              style: TextStyle(fontSize: 17),
-                            ),
-                            Container(
-                                width: 30,
-                                height: 30,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.orange,
-                                ),
-                                child: FloatingActionButton(
-                                  child: Icon(
-                                    Icons.add,
-                                    color: Colors.white,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _quantity++;
-                                    });
-                                  },
-                                ))
-                          ],
-                        ),
-                        SizedBox(
-                          height: 20,
-                        ),
-                        Row(
-                          children: [
-                            Text(
-                              'Total Price',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w800, fontSize: 17),
-                            ),
-                            SizedBox(
-                              width: 20,
-                            ),
-                            Text(
-                              '\$${_quantity * (widget.price + 0.0)}',
-                              style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.orange),
-                            ),
-                          ],
-                        ),
-                        SizedBox(
-                          height: 40,
-                        ),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _isLoading
-                                  ? Center(
-                                      child: CircularProgressIndicator(
-                                        color: Colors.blue,
-                                        backgroundColor: Colors.transparent,
-                                      ),
-                                    )
-                                  : ElevatedButton(
-                                      style: TextButton.styleFrom(
-                                        backgroundColor: Colors.blue,
-                                      ),
-                                      onPressed: () async {
-                                        setState(() {
-                                          _isLoading = true;
-                                        });
-                                        print('Button is working');
-                                        await addItemToCart(
-                                            widget.restId,
-                                            widget.id,
-                                            widget.title,
-                                            widget.price.toString(),
-                                            _quantity.toString());
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 10),
-                                        child: const Text(
-                                          'Add TO Cart',
-                                          style: TextStyle(
-                                              fontSize: 18,
-                                              color: Colors.white),
-                                        ),
-                                      ),
-                                    ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                });
-              });
+        onTap: () async {
+          await loadOptions(widget.id);
+          Navigator.of(context).pushNamed(RestaurantItem.restaurantItemRoute,
+              arguments: widget.id);
+
+          // showModalBottomSheet(
+          //     shape: RoundedRectangleBorder(
+          //         borderRadius: BorderRadius.only(
+          //             topLeft: Radius.circular(25),
+          //             topRight: Radius.circular(25))),
+          //     isScrollControlled: true,
+          //     // expand: true,
+          //     enableDrag: true,
+          //     context: context,
+          //     builder: (ctx) {
+          //       return StatefulBuilder(builder: (BuildContext ctx, setState) {
+          //         return Padding(
+          //           padding: const EdgeInsets.all(10.0),
+          //           child: Column(
+          //             mainAxisSize: MainAxisSize.min,
+          //             mainAxisAlignment: MainAxisAlignment.start,
+          //             children: [
+          //               Padding(
+          //                 padding: EdgeInsets.symmetric(vertical: 20),
+          //                 child: Container(
+          //                     height: 150,
+          //                     width: 150,
+          //                     decoration: BoxDecoration(shape: BoxShape.circle),
+          //                     child: ClipRRect(
+          //                         borderRadius: BorderRadius.circular(1000),
+          //                         child: Image(
+          //                           image: NetworkImage(widget.image),
+          //                           fit: BoxFit.cover,
+          //                         ))),
+          //               ),
+          //               Column(
+          //                 crossAxisAlignment: CrossAxisAlignment.center,
+          //                 children: [
+          //                   Text(
+          //                     widget.title,
+          //                     style: TextStyle(
+          //                         fontSize: 25, fontWeight: FontWeight.bold),
+          //                   ),
+          //                   SizedBox(height: 10),
+          //                   Text('\$${widget.price + 0.0}',
+          //                       style: TextStyle(
+          //                           fontSize: 25,
+          //                           color: Colors.orange.shade800,
+          //                           fontWeight: FontWeight.w800)),
+          //                 ],
+          //               ),
+          //               const SizedBox(
+          //                 height: 20,
+          //               ),
+          //               SizedBox(
+          //                 width: double.infinity,
+          //                 child: Column(
+          //                   crossAxisAlignment: CrossAxisAlignment.start,
+          //                   children: [
+          //                     Text(
+          //                       'Description:',
+          //                       style: TextStyle(
+          //                           fontSize: 18, fontWeight: FontWeight.bold),
+          //                     ),
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     Text(
+          //                       widget.description,
+          //                       style:
+          //                           TextStyle(color: Colors.grey, fontSize: 16),
+          //                     ),
+          //                   ],
+          //                 ),
+          //               ),
+          //               SizedBox(
+          //                 height: 20,
+          //               ),
+          //               Card(
+          //                 child: RadioGroup<String>.builder(
+          //                     direction: Axis.horizontal,
+          //                     groupValue: radioValue,
+          //                     onChanged: (value) {
+          //                       setState(() {
+          //                         radioValue = value.toString();
+          //                       });
+          //                     },
+          //                     items: _itemSize,
+          //                     itemBuilder: (i) {
+          //                       return RadioButtonBuilder(i.toString(),
+          //                           textPosition: RadioButtonTextPosition.left);
+          //                     }),
+          //               ),
+          //               SizedBox(
+          //                 height: 30,
+          //               ),
+          //               Row(
+          //                 children: [
+          //                   Text(
+          //                     'Quantity',
+          //                     style: TextStyle(
+          //                         fontWeight: FontWeight.w800, fontSize: 17),
+          //                   ),
+          //                   SizedBox(
+          //                     width: 20,
+          //                   ),
+          //                   Container(
+          //                       width: 30,
+          //                       height: 30,
+          //                       decoration: BoxDecoration(
+          //                         shape: BoxShape.circle,
+          //                         color: Colors.grey,
+          //                       ),
+          //                       child: FloatingActionButton(
+          //                         child: Icon(
+          //                           Icons.remove,
+          //                           color: Colors.white,
+          //                         ),
+          //                         onPressed: () {
+          //                           if (_quantity > 1) {
+          //                             setState(() {
+          //                               _quantity--;
+          //                             });
+          //                           }
+          //                         },
+          //                       )),
+          //                   Text(
+          //                     '  $_quantity  ',
+          //                     style: TextStyle(fontSize: 17),
+          //                   ),
+          //                   Container(
+          //                       width: 30,
+          //                       height: 30,
+          //                       decoration: BoxDecoration(
+          //                         shape: BoxShape.circle,
+          //                         color: Colors.orange,
+          //                       ),
+          //                       child: FloatingActionButton(
+          //                         child: Icon(
+          //                           Icons.add,
+          //                           color: Colors.white,
+          //                         ),
+          //                         onPressed: () {
+          //                           setState(() {
+          //                             _quantity++;
+          //                           });
+          //                         },
+          //                       ))
+          //                 ],
+          //               ),
+          //               SizedBox(
+          //                 height: 20,
+          //               ),
+          //               Row(
+          //                 children: [
+          //                   Text(
+          //                     'Total Price',
+          //                     style: TextStyle(
+          //                         fontWeight: FontWeight.w800, fontSize: 17),
+          //                   ),
+          //                   SizedBox(
+          //                     width: 20,
+          //                   ),
+          //                   Text(
+          //                     '\$${_quantity * (widget.price + 0.0)}',
+          //                     style: TextStyle(
+          //                         fontSize: 20,
+          //                         fontWeight: FontWeight.w800,
+          //                         color: Colors.orange),
+          //                   ),
+          //                 ],
+          //               ),
+          //               SizedBox(
+          //                 height: 40,
+          //               ),
+          //               Row(
+          //                 children: [
+          //                   Expanded(
+          //                     child: _isLoading
+          //                         ? Center(
+          //                             child: CircularProgressIndicator(
+          //                               color: Colors.blue,
+          //                               backgroundColor: Colors.transparent,
+          //                             ),
+          //                           )
+          //                         : ElevatedButton(
+          //                             style: TextButton.styleFrom(
+          //                               backgroundColor: Colors.blue,
+          //                             ),
+          // onPressed: () async {
+          //   setState(() {
+          //     _isLoading = true;
+          //   });
+          //   print('Button is working');
+          //   await addItemToCart(
+          //       widget.restId,
+          //       widget.id,
+          //       widget.title,
+          //       widget.price.toString(),
+          //       _quantity.toString());
+          // },
+          //                             child: Padding(
+          //                               padding: const EdgeInsets.symmetric(
+          //                                   vertical: 10),
+          //                               child: const Text(
+          //                                 'Add TO Cart',
+          //                                 style: TextStyle(
+          //                                     fontSize: 18,
+          //                                     color: Colors.white),
+          //                               ),
+          //                             ),
+          //                           ),
+          //                   ),
+          //                 ],
+          //               ),
+          //             ],
+          //           ),
+          //         );
+          //       });
+          //     });
           // Navigator.of(context)
           //     .pushNamed(MenuDetails.menuDetailRoute, arguments: widget.id);
         },
-        trailing: Container(
-          constraints: BoxConstraints(minWidth: 105, maxWidth: 120),
-          width: MediaQuery.of(context).size.width * 0.3,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Chip(label: Text('\$${widget.price}')),
-              IconButton(
-                  onPressed: () {},
-                  icon: Icon(
-                    Icons.shopping_cart_outlined,
-                    color: Colors.orange,
-                  ))
-            ],
-          ),
+        trailing: Text(
+          '\$${widget.price}',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         contentPadding: EdgeInsets.all(10),

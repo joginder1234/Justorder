@@ -18,6 +18,7 @@ class _BookingHistoryDetailsState extends State<BookingHistoryDetails> {
   @override
   Widget build(BuildContext context) {
     var bookingId = ModalRoute.of(context)?.settings.arguments;
+    print(bookingId);
     var bookingDetail = Provider.of<HotelDataProvider>(context)
         .hotelBookings
         .firstWhere((element) => element.bookingId == bookingId);
@@ -47,7 +48,9 @@ class _BookingHistoryDetailsState extends State<BookingHistoryDetails> {
                   shape: BoxShape.circle),
               child: IconButton(
                   onPressed: () {
-                    Navigator.of(context).pop();
+                    Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => BaseWidget()),
+                        (route) => false);
                   },
                   icon: Icon(Icons.arrow_back)),
             ),
@@ -166,7 +169,7 @@ class _BookingHistoryDetailsState extends State<BookingHistoryDetails> {
                                         'Room Charge (per night)\nNumber of Nights\nRooms Booked\n\nSubtotal\nDiscount\nTotal Bill Amount\n\nBooking ID :\nPayment txn ID :\nPayment Status :',
                                       ),
                                       Text(
-                                        '${bookingDetail.roomCharge}\n${bookingDetail.checkout.difference(bookingDetail.checkin).inDays} nights\n${bookingDetail.totalRooms}\n\n\$ ${bookingDetail.totalCharge - bookingDetail.discount}\n(-) \$ ${bookingDetail.discount}\n\$ ${bookingDetail.totalCharge}\n\n${bookingDetail.bookingId}\n \nPaid',
+                                        '${bookingDetail.roomCharge}\n${bookingDetail.checkout.difference(bookingDetail.checkin).inDays} nights\n${bookingDetail.totalRooms}\n\n\$ ${bookingDetail.totalCharge - bookingDetail.discount}\n(-) \$ ${bookingDetail.discount}\n\$ ${bookingDetail.totalCharge}\n\n${bookingDetail.bookingId}\n${bookingDetail.txnId}\nPaid',
                                         textAlign: TextAlign.right,
                                       ),
                                     ],

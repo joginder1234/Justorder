@@ -18,7 +18,7 @@ class _RestaurantOrdersState extends State<RestaurantOrders> {
   getOrderList() async {
     try {
       await HttpWrapper.sendGetRequest(url: REST_ORDER_LIST).then((orders) {
-        print(orders);
+        Map<String, dynamic> orderData = {};
       });
     } catch (e) {
       print(e);
@@ -43,7 +43,7 @@ class _RestaurantOrdersState extends State<RestaurantOrders> {
       },
       child: Scaffold(
           appBar: AppBar(
-            foregroundColor: Colors.black,
+            foregroundColor: Colors.white,
             title: Text('Food Orders'),
             centerTitle: true,
           ),

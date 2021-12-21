@@ -11,6 +11,8 @@ class HotelHistoryTile extends StatefulWidget {
   int adults;
   int kids;
   DateTime checkin;
+  double roomsCharge;
+  String txnId;
   DateTime checkout;
 
   HotelHistoryTile(
@@ -23,6 +25,8 @@ class HotelHistoryTile extends StatefulWidget {
       required this.adults,
       required this.kids,
       required this.checkin,
+      required this.roomsCharge,
+      required this.txnId,
       required this.checkout})
       : super(key: key);
 
@@ -77,7 +81,7 @@ class _HotelHistoryTileState extends State<HotelHistoryTile> {
                           children: [
                             Icon(
                               Icons.bed,
-                              color: Colors.blue,
+                              color: Theme.of(context).buttonColor,
                             ),
                             Text('${widget.rooms} Rooms'),
                           ],
@@ -94,7 +98,7 @@ class _HotelHistoryTileState extends State<HotelHistoryTile> {
                           children: [
                             Icon(
                               Icons.person,
-                              color: Colors.blue,
+                              color: Theme.of(context).buttonColor,
                             ),
                             Text('${widget.adults} Adults'),
                             Text('${widget.kids} Kids'),
@@ -111,7 +115,7 @@ class _HotelHistoryTileState extends State<HotelHistoryTile> {
               children: [
                 Chip(
                     side: BorderSide(color: Colors.grey.shade100, width: 10),
-                    backgroundColor: Colors.blue,
+                    backgroundColor: Theme.of(context).buttonColor,
                     padding: EdgeInsets.all(10),
                     label: Text(
                       '${DateFormat('MMMd').format(widget.checkin)} - ${DateFormat('MMMd').format(widget.checkout)}',

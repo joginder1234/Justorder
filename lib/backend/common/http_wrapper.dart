@@ -67,4 +67,24 @@ class HttpWrapper {
       return e;
     }
   }
+
+  static Future sendResetPassPostRequest(
+      {required String url,
+      required var body,
+      bool exemptHeader = false}) async {
+    try {
+      SharedPreferences sharedPreferences =
+          await SharedPreferences.getInstance();
+
+      http.Response response = await http.post(
+        Uri.parse(url),
+        body: body,
+      );
+      var responseData = json.decode(response.body.toString());
+      return responseData;
+    } catch (e) {
+      print('HTTP Error : $e');
+      return e;
+    }
+  }
 }

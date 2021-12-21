@@ -18,8 +18,6 @@ class HotelRooms extends StatelessWidget {
         .hotelData
         .firstWhere((element) => element.id == hotelId);
 
-    print(roomsList[0].deluxeType.image);
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle(
             statusBarIconBrightness: Brightness.light,
@@ -49,45 +47,18 @@ class HotelRooms extends StatelessWidget {
                         ],
                       ),
                     )
-                  : ListView(
-                      children: [
-                        RoomsTiles(
-                            hotel.id,
-                            hotel.hotelDetail.hotelName,
-                            context,
-                            roomsList[0].singleType.roomtype,
-                            roomsList[0].singleType.price,
-                            roomsList[0].singleType.kids,
-                            roomsList[0].singleType.adults,
-                            roomsList[0].singleType.image),
-                        RoomsTiles(
-                            hotel.id,
-                            hotel.hotelDetail.hotelName,
-                            context,
-                            roomsList[0].doubleType.roomType,
-                            roomsList[0].doubleType.price,
-                            roomsList[0].doubleType.kids,
-                            roomsList[0].doubleType.adults,
-                            roomsList[0].doubleType.image),
-                        RoomsTiles(
-                            hotel.id,
-                            hotel.hotelDetail.hotelName,
-                            context,
-                            roomsList[0].duplexType.roomtype,
-                            roomsList[0].duplexType.price,
-                            roomsList[0].duplexType.kids,
-                            roomsList[0].duplexType.adults,
-                            roomsList[0].duplexType.image),
-                        RoomsTiles(
-                            hotel.id,
-                            hotel.hotelDetail.hotelName,
-                            context,
-                            roomsList[0].deluxeType.roomtype,
-                            roomsList[0].deluxeType.price,
-                            roomsList[0].deluxeType.kids,
-                            roomsList[0].deluxeType.adults,
-                            roomsList[0].deluxeType.image)
-                      ],
+                  : ListView.builder(
+                      itemCount: roomsList.length,
+                      shrinkWrap: true,
+                      itemBuilder: (ctx, i) => RoomsTiles(
+                          hotel.id,
+                          hotel.hotelDetail.hotelName,
+                          context,
+                          roomsList[i]['type']['roomType'],
+                          roomsList[i]['type']['Price'] + 0.0,
+                          roomsList[i]['type']['kid'],
+                          roomsList[i]['type']['adults'],
+                          roomsList[i]['type']['image']),
                     )),
         ));
   }

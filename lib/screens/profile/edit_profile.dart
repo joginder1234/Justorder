@@ -1,6 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:justorderuser/backend/common/http_wrapper.dart';
 import 'package:justorderuser/backend/providers/auth_provider.dart';
+import 'package:justorderuser/backend/urls/urls.dart';
 import 'package:justorderuser/common/custom_toast.dart';
+import 'package:image_picker/image_picker.dart';
 
 class EditProfile extends StatefulWidget {
   final Map userDetails;
@@ -16,7 +21,13 @@ class _EditProfileState extends State<EditProfile> {
   TextEditingController mobile = new TextEditingController();
   TextEditingController address = new TextEditingController();
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
+
+  File? file;
+  XFile? xfile;
+  List<String> imageFiles = [];
+  bool _uploading = false;
 
   setData() async {
     setState(() {
@@ -33,19 +44,43 @@ class _EditProfileState extends State<EditProfile> {
     setData();
   }
 
+  getImage() async {
+    var img = await _picker.pickImage(source: ImageSource.gallery);
+
+    if (img?.path == null) {
+      return;
+    }
+
+    final imageSplit = img!.path.split('/');
+    final imageLink = imageSplit.last;
+    print('MyImage :: $imageLink');
+
+    uploadFiles(imageLink);
+  }
+
+  uploadFiles(String imagepath) async {
+    print(imagepath);
+
+    setState(() {
+      _uploading = true;
+    });
+    Map<String, dynamic> image = {'file': imagepath};
+    var imagelink =
+        await HttpWrapper.sendPostRequest(url: ADD_USER_IMAGE, body: image);
+    print(imagelink);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        foregroundColor: Colors.white,
         iconTheme: IconThemeData(
-          color: Colors.black,
+          color: Colors.white,
         ),
         title: Text(
           'Edit',
-          style: TextStyle(
-            color: Colors.black,
-          ),
         ),
         actions: [IconButton(onPressed: saveProfile, icon: Icon(Icons.check))],
       ),
@@ -56,6 +91,10 @@ class _EditProfileState extends State<EditProfile> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             _isLoading ? LinearProgressIndicator() : Container(),
+            const SizedBox(
+              height: 10,
+            ),
+            _buildImageAvatar(),
             customTextField("Enter your Firstname", "First Name", firstName),
             customTextField("Enter your lastname", "Last Name", lastName),
             customTextField("Enter your mobile", "Mobile", mobile),
@@ -76,6 +115,45 @@ class _EditProfileState extends State<EditProfile> {
         validator: (value) => value!.isEmpty ? "Please enter $label" : null,
         decoration: InputDecoration(
             border: OutlineInputBorder(), hintText: hint, labelText: label),
+      ),
+    );
+  }
+
+  Widget _buildImageAvatar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.amber,
+        shape: BoxShape.circle,
+      ),
+      height: 120,
+      width: 120,
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(1000),
+            // child: Image(image: NetworkImage(url)),
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: PopupMenuButton(
+                child: Container(
+                    height: 30,
+                    width: 30,
+                    decoration: BoxDecoration(
+                        shape: BoxShape.circle, color: Colors.black),
+                    child: Icon(Icons.edit, color: Colors.white)),
+                itemBuilder: (ctx) => [
+                      PopupMenuItem(
+                        onTap: () {
+                          getImage();
+                        },
+                        child: Text('Add Image'),
+                        value: 1,
+                      ),
+                    ]),
+          ),
+        ],
       ),
     );
   }

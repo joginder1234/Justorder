@@ -101,6 +101,7 @@ class HotelBookingHistoryModel {
   int adults;
   int kids;
   bool paymentStatus;
+  String txnId;
   double discount;
   double totalCharge;
   double roomCharge;
@@ -116,6 +117,7 @@ class HotelBookingHistoryModel {
       this.adults,
       this.kids,
       this.paymentStatus,
+      this.txnId,
       this.discount,
       this.totalCharge,
       this.roomCharge,
@@ -123,7 +125,7 @@ class HotelBookingHistoryModel {
   HotelBookingHistoryModel.fromJson(Map<String, dynamic> booking)
       : bookingId = booking['_id'],
         hotelId = booking['hotelId'],
-        name = booking['name'],
+        name = booking['name'] ?? '',
         checkin = DateTime.parse(booking['checkin']),
         checkout = DateTime.parse(booking['checkout']),
         roomtype = booking['roomtype'],
@@ -131,6 +133,7 @@ class HotelBookingHistoryModel {
         adults = booking['adults'],
         kids = booking['children'],
         paymentStatus = booking['status'],
+        txnId = booking['txnId'].toString(),
         discount = booking['discount'] + 0.0 ?? 0.0,
         totalCharge = booking['charges'] + 0.0 ?? 0.0,
         roomCharge = booking['roomPrice'] ?? 0.0,

@@ -13,6 +13,7 @@ import 'package:justorderuser/explore.dart';
 import 'package:justorderuser/modals/restaurant_details.dart';
 import 'package:justorderuser/screens/base_widget.dart';
 import 'package:justorderuser/screens/explore/hotels/hotel_functions.dart';
+import 'package:justorderuser/screens/explore/restaurant/review_order_screen.dart';
 import 'package:justorderuser/screens/order_history/restaurant_orders.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -68,6 +69,7 @@ class _RestaurantCartState extends State<RestaurantCart> {
   double getCartTotal() {
     double cartTotal = 0.0;
     _cartItems.forEach((element) {
+      print('Price check :: ${element['price'].toString()}');
       cartTotal += double.parse(element['price'].toString()) *
           double.parse(element['quantity'].toString());
 
@@ -88,33 +90,17 @@ class _RestaurantCartState extends State<RestaurantCart> {
     loadCartItems();
   }
 
-  emptyCart() async {
-    setState(() {
-      _isLoading = true;
-    });
-    try {
-      var dltResponse = await HttpWrapper.sendDeleteRequest(url: EMPTY_CART);
-      if (dltResponse['success'] == true) {
-        print(dltResponse);
-        loadCartItems();
-      }
-    } catch (e) {
-      log(e.toString());
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
   loadCartItems() async {
     SharedPreferences _prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _isLoading = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
     try {
       var cartData = await HttpWrapper.sendGetRequest(url: GET_CART_ITEM);
       print("Cart Data :: $cartData");
-      if (cartData['success'] == true) {
+      if (cartData['success'] == true && mounted) {
         setState(() {
           cartId = cartData['carts'][0]['_id'];
           userId = cartData['carts'][0]['userId'];
@@ -142,9 +128,11 @@ class _RestaurantCartState extends State<RestaurantCart> {
       }
     } catch (e) {
       CustomToast.showToast(e.toString());
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -176,57 +164,6 @@ class _RestaurantCartState extends State<RestaurantCart> {
     return restName;
   }
 
-  sendOrder() async {
-    setState(() {
-      ordering = true;
-    });
-    try {
-      Map<String, dynamic> _order = {
-        'orderDate': DateFormat('yMMMd').format(DateTime.now()),
-        'orderTime': TimeOfDay.now().format(context),
-        'restaurantId': restId,
-        // 'restaurantName': getRestName(),
-        // 'cartItems': _cartItems,
-        'cartId': cartId,
-        'userId': userId,
-        'status': 'preparing',
-        'paymentMethod': 'card',
-        'totalPrice':
-            (getCartTotal() + deliveryCharge + serviceCharge).toString(),
-        // 'quantity': getQuantity().toString(),
-        // 'transaction_id': '',
-        // 'transiction_details': 'paid',
-        'line1': _addressController.text.trim(),
-        'city': _cityController.text.trim(),
-        'state': _stateController.text.trim(),
-        'phone': _contactController.text.trim()
-      };
-
-      // Provider.of<ResaurantsDataProvider>(context, listen: false)
-      //     .myOrders
-      //     .add(_order);
-
-      await HttpWrapper.sendPostRequest(url: ORDER_FOOD, body: _order)
-          .then((value) {
-        print(value);
-        print('Order Submitted');
-        emptyCart();
-        setState(() {
-          deliveryCharge = 0.0;
-          ordering = false;
-        });
-        Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => RestaurantOrders()),
-            (route) => false);
-      });
-    } catch (e) {
-      log(e.toString());
-      setState(() {
-        ordering = false;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -244,17 +181,6 @@ class _RestaurantCartState extends State<RestaurantCart> {
           title: Text(
             "Order Basket",
           ),
-          actions: [
-            IconButton(
-                onPressed: () {
-                  Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => BaseWidget()),
-                      (route) => false);
-                },
-                icon: Icon(
-                  Icons.home,
-                ))
-          ],
         ),
         body: Column(
           children: [
@@ -267,137 +193,135 @@ class _RestaurantCartState extends State<RestaurantCart> {
                     height: 4,
                   ),
             Expanded(
-              child: _isLoading
-                  ? Container(
-                      color: Colors.white,
+              child: _cartItems.isEmpty || _cartItems == []
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image(
+                            image: AssetImage('assets/empty.jpg'),
+                            width: MediaQuery.of(context).size.width * 0.35,
+                          ),
+                          Text(
+                            'No Items in cart....',
+                            style: TextStyle(
+                                fontSize: 18, color: Colors.grey.shade600),
+                          ),
+                          Text(
+                            'add some to continue',
+                            style: TextStyle(
+                                fontSize: 18, color: Colors.grey.shade600),
+                          )
+                        ],
+                      ),
                     )
-                  : _cartItems.isEmpty || _cartItems == []
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      padding: EdgeInsets.all(10),
+                      itemCount: _cartItems.length,
+                      itemBuilder: (ctx, i) {
+                        return Container(
+                          decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                    color: Colors.grey.shade200, blurRadius: 10)
+                              ],
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.grey.shade300)),
+                          margin: EdgeInsets.symmetric(vertical: 5),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 10),
+                          child: Row(
                             children: [
-                              Image(
-                                image: AssetImage('assets/empty.jpg'),
-                                width: MediaQuery.of(context).size.width * 0.35,
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _cartItems[i]['name'] ?? '',
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w400),
+                                  ),
+                                  Text(
+                                    '\$${_cartItems[i]['price'] + 0.0}',
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                ],
                               ),
-                              Text(
-                                'No Items in cart....',
-                                style: TextStyle(
-                                    fontSize: 18, color: Colors.grey.shade600),
-                              ),
-                              Text(
-                                'add some to continue',
-                                style: TextStyle(
-                                    fontSize: 18, color: Colors.grey.shade600),
+                              const Spacer(),
+                              SizedBox(
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 120,
+                                      decoration: BoxDecoration(
+                                          // color: Colors.grey.shade200,
+                                          borderRadius:
+                                              BorderRadius.circular(15)),
+                                      child: Row(
+                                        children: [
+                                          IconButton(
+                                              onPressed: () {
+                                                setState(() {
+                                                  _isLoading = true;
+                                                  final newvalue = int.parse(
+                                                          _cartItems[i]
+                                                                  ['quantity']
+                                                              .toString()) -
+                                                      1;
+                                                  _cartItems[i]['quantity'] =
+                                                      newvalue.clamp(1, 100);
+                                                });
+                                                updateCart(
+                                                    cartId,
+                                                    _cartItems[i]['quantity']
+                                                        .toString(),
+                                                    _cartItems[i]['_id']);
+                                              },
+                                              icon: const Icon(Icons.remove)),
+                                          Text(_cartItems[i]['quantity']
+                                              .toString()),
+                                          IconButton(
+                                              onPressed: () {
+                                                setState(() {
+                                                  final newvalue = int.parse(
+                                                          _cartItems[i]
+                                                                  ['quantity']
+                                                              .toString()) +
+                                                      1;
+                                                  _cartItems[i]['quantity'] =
+                                                      newvalue.clamp(1, 100);
+                                                });
+
+                                                updateCart(
+                                                    cartId,
+                                                    _cartItems[i]['quantity']
+                                                        .toString(),
+                                                    _cartItems[i]['_id']);
+                                              },
+                                              icon: const Icon(Icons.add))
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                        onPressed: () {
+                                          deleteCartItems(
+                                              _cartItems[i]['_id'], cartId);
+                                        },
+                                        icon: Icon(
+                                          Icons.delete,
+                                          color: Colors.red,
+                                        ))
+                                  ],
+                                ),
                               )
                             ],
                           ),
-                        )
-                      : ListView.builder(
-                          shrinkWrap: true,
-                          padding: EdgeInsets.all(10),
-                          itemCount: _cartItems.length,
-                          itemBuilder: (ctx, i) {
-                            return Container(
-                              decoration: BoxDecoration(
-                                  boxShadow: [
-                                    BoxShadow(
-                                        color: Colors.grey.shade200,
-                                        blurRadius: 10)
-                                  ],
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border:
-                                      Border.all(color: Colors.grey.shade300)),
-                              margin: EdgeInsets.symmetric(vertical: 5),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 10),
-                              child: Row(
-                                children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        _cartItems[i]['name'] ?? '',
-                                        style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w400),
-                                      ),
-                                      Text(
-                                        '\$${_cartItems[i]['price'] + 0.0}',
-                                        style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w600),
-                                      ),
-                                    ],
-                                  ),
-                                  const Spacer(),
-                                  SizedBox(
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 105,
-                                          decoration: BoxDecoration(
-                                              // color: Colors.grey.shade200,
-                                              borderRadius:
-                                                  BorderRadius.circular(15)),
-                                          child: Row(
-                                            children: [
-                                              IconButton(
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      final newvalue =
-                                                          int.parse(_cartItems[
-                                                                          i][
-                                                                      'quantity']
-                                                                  .toString()) -
-                                                              1;
-                                                      _cartItems[i]
-                                                              ['quantity'] =
-                                                          newvalue.clamp(
-                                                              1, 100);
-                                                    });
-                                                  },
-                                                  icon:
-                                                      const Icon(Icons.remove)),
-                                              Text(_cartItems[i]['quantity']
-                                                  .toString()),
-                                              IconButton(
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      final newvalue =
-                                                          int.parse(_cartItems[
-                                                                          i][
-                                                                      'quantity']
-                                                                  .toString()) +
-                                                              1;
-                                                      _cartItems[i]
-                                                              ['quantity'] =
-                                                          newvalue.clamp(
-                                                              1, 100);
-                                                    });
-                                                  },
-                                                  icon: const Icon(Icons.add))
-                                            ],
-                                          ),
-                                        ),
-                                        IconButton(
-                                            onPressed: () {
-                                              deleteCartItems(
-                                                  _cartItems[i]['_id'], cartId);
-                                            },
-                                            icon: Icon(
-                                              Icons.delete,
-                                              color: Colors.red,
-                                            ))
-                                      ],
-                                    ),
-                                  )
-                                ],
-                              ),
-                            );
-                          }),
+                        );
+                      }),
             ),
           ],
         ),
@@ -500,10 +424,14 @@ class _RestaurantCartState extends State<RestaurantCart> {
                     Expanded(
                       child: ElevatedButton(
                           style: ButtonStyle(
+                              backgroundColor: MaterialStateProperty.all(
+                                  Theme.of(context).buttonColor),
                               fixedSize: MaterialStateProperty.all(
                                   Size(MediaQuery.of(context).size.width, 50))),
                           onPressed: () {
-                            showAddressDialog(context);
+                            // showAddressDialog(context);
+                            Navigator.of(context).push(MaterialPageRoute(
+                                builder: (_) => ReviewFoodOrder()));
                           },
                           child: const Text(
                             'Begin Chechout',
@@ -541,52 +469,32 @@ class _RestaurantCartState extends State<RestaurantCart> {
     );
   }
 
-  Future<dynamic> showAddressDialog(BuildContext context) {
-    return showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (BuildContext context, setState) {
-          return SimpleDialog(
-            contentPadding: EdgeInsets.all(15),
-            title: Text('Choose your address'),
-            children: [
-              buildtextField('Address', _addressController),
-              const SizedBox(
-                height: 10,
-              ),
-              buildtextField('City', _cityController),
-              const SizedBox(
-                height: 10,
-              ),
-              buildtextField('State', _stateController),
-              const SizedBox(
-                height: 10,
-              ),
-              buildtextField('Phone', _contactController),
-              const SizedBox(
-                height: 20,
-              ),
-              OutlinedButton(
-                  onPressed: () {},
-                  child: Text(
-                    'Edit Address',
-                    style: TextStyle(fontSize: 18),
-                  )),
-              ElevatedButton(
-                  onPressed: () async {
-                    Navigator.of(context).pop(context);
-                    buildLoadingStatus(ordering);
-                    await sendOrder();
-                  },
-                  child: Text(
-                    'Proceed',
-                    style: TextStyle(fontSize: 18),
-                  ))
-            ],
-          );
-        },
-      ),
-    );
+  updateCart(String cartId, String quantity, String cartItemId) async {
+    print(cartItemId);
+    Map<String, dynamic> updatedData = {
+      'quantity': quantity,
+      'cartItemsId': cartItemId
+    };
+    try {
+      var response = await HttpWrapper.sendPostRequest(
+          url: UPDATE_CART + '/$cartId', body: updatedData);
+
+      loadCartItems();
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      log('Update Response :: $response');
+    } catch (e) {
+      CustomToast.showToast(e.toString());
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   buildLoadingStatus(bool loading) {

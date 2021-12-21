@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:justorderuser/backend/common/http_wrapper.dart';
+import 'package:justorderuser/backend/providers/auth_provider.dart';
 import 'package:justorderuser/backend/providers/source_provider.dart';
 import 'package:justorderuser/backend/services/paymentservice.dart';
 import 'package:justorderuser/backend/urls/urls.dart';
@@ -38,6 +39,8 @@ class _BookingReviewState extends State<BookingReview> {
   final TextEditingController _postalController = TextEditingController();
   final TextEditingController _countryController = TextEditingController();
 
+  Map<String, dynamic> addressOfUser = {};
+
   String line1 = '';
   String city = '';
   String state = '';
@@ -45,15 +48,19 @@ class _BookingReviewState extends State<BookingReview> {
   String postal = '';
   String country = '';
 
+  int val = 1;
+
   String transactionId = '';
   int retryTime = 3;
+
+  String id = '';
 
   bool loading = false;
 
   @override
   void initState() {
     super.initState();
-
+    getUserAddress();
     loadUserDetails();
   }
 
@@ -63,6 +70,7 @@ class _BookingReviewState extends State<BookingReview> {
         print(value['user']);
         Map<String, dynamic> user = {
           'name': '${value['user']['firstName']} ${value['user']['lastName']}',
+          'address': value['user']['address'],
           'userId': value['user']['_id']
         };
         setState(() {
@@ -71,6 +79,93 @@ class _BookingReviewState extends State<BookingReview> {
       });
     } catch (e) {
       print(e);
+    }
+  }
+
+  addUserAddress() async {
+    try {
+      Map<String, dynamic> userAddress = {
+        'address': _addressController.text.trim(),
+        'city': _cityController.text.trim(),
+        'postcode': _postalController.text.trim(),
+        'country': _countryController.text.trim(),
+      };
+      var response = await HttpWrapper.sendPostRequest(
+          url: ADD_USER_ADDRESS, body: userAddress);
+      if (response['success'] == true) {
+        await getUserAddress();
+        setState(() {
+          loading = false;
+        });
+        Navigator.of(context).pop();
+      } else {
+        CustomToast.showToast('Unable to add address, try again!');
+        setState(() {
+          loading = false;
+        });
+      }
+    } catch (e) {
+      CustomToast.showToast(e.toString());
+      setState(() {
+        loading = false;
+      });
+    }
+  }
+
+  getUserAddress() async {
+    try {
+      await HttpWrapper.sendGetRequest(url: GET_USER_ADDRESS).then((address) {
+        if (address['success'] == true) {
+          print('MyAddress :: $address');
+          var ad = address['detailRes'][0];
+          print(ad);
+          Map<String, dynamic> data = {
+            'address': ad['address'],
+            'city': ad['city'],
+            'postcode': ad['postcode'],
+            'country': ad['country'],
+          };
+          setState(() {
+            addressOfUser = data;
+            _addressController.text = ad['address'];
+            _cityController.text = ad['city'];
+            _postalController.text = ad['postcode'];
+            _countryController.text = ad['country'];
+          });
+        }
+      });
+    } catch (e) {
+      CustomToast.showToast(e.toString());
+    }
+  }
+
+  updateAddress() async {
+    try {
+      Map<String, dynamic> userAddress = {
+        'address': _addressController.text.trim(),
+        'city': _cityController.text.trim(),
+        'postcode': _postalController.text.trim(),
+        'country': _countryController.text.trim(),
+      };
+      var response = await HttpWrapper.sendPostRequest(
+          url: UPDATE_USER_ADDRESS, body: userAddress);
+      if (response['success'] == true) {
+        getUserAddress();
+        setState(() {
+          loading = false;
+        });
+        Navigator.of(context).pop();
+      } else {
+        CustomToast.showToast('Unable to Update your request, try again!');
+        setState(() {
+          loading = false;
+        });
+      }
+    } catch (e) {
+      CustomToast.showToast(e.toString());
+      setState(() {
+        loading = false;
+      });
     }
   }
 
@@ -83,33 +178,33 @@ class _BookingReviewState extends State<BookingReview> {
 
   @override
   Widget build(BuildContext context) {
-    double adultRatio = adults / widget.adults;
-    double childRatio = children / widget.kids;
-    rooms = adults > widget.adults && children < widget.kids
-        ? adultRatio.ceil()
-        : adults < widget.adults && children > widget.kids
-            ? childRatio.ceil()
-            : adults > widget.adults && children > widget.kids
-                ? (adultRatio.floor() + childRatio.floor() + 1)
-                : adults == widget.adults || children == widget.kids
-                    ? adultRatio.ceil() + childRatio.ceil()
-                    : adults == widget.adults && children < widget.kids
-                        ? 2
-                        : adults == widget.adults && children > widget.kids
-                            ? 1 + childRatio.ceil()
-                            : adults > widget.adults && children == widget.kids
-                                ? 1 + adultRatio.ceil()
-                                : adults < widget.adults &&
-                                        children == widget.kids
-                                    ? 2
-                                    : adults < widget.adults / 2.ceil() &&
-                                            children < widget.kids / 2.ceil()
-                                        ? 1
-                                        : adults > widget.adults / 2.ceil() &&
-                                                children >
-                                                    widget.kids / 2.ceil()
-                                            ? 2
-                                            : 1;
+    // double adultRatio = adults / widget.adults;
+    // double childRatio = children / widget.kids;
+    // rooms = adults > widget.adults && children < widget.kids
+    //     ? adultRatio.ceil()
+    //     : adults < widget.adults && children > widget.kids
+    //         ? childRatio.ceil()
+    //         : adults > widget.adults && children > widget.kids
+    //             ? (adultRatio.floor() + childRatio.floor() + 1)
+    //             : adults == widget.adults || children == widget.kids
+    //                 ? adultRatio.ceil() + childRatio.ceil()
+    //                 : adults == widget.adults && children < widget.kids
+    //                     ? 2
+    //                     : adults == widget.adults && children > widget.kids
+    //                         ? 1 + childRatio.ceil()
+    //                         : adults > widget.adults && children == widget.kids
+    //                             ? 1 + adultRatio.ceil()
+    //                             : adults < widget.adults &&
+    //                                     children == widget.kids
+    //                                 ? 2
+    //                                 : adults < widget.adults / 2.ceil() &&
+    //                                         children < widget.kids / 2.ceil()
+    //                                     ? 1
+    //                                     : adults > widget.adults / 2.ceil() &&
+    //                                             children >
+    //                                                 widget.kids / 2.ceil()
+    //                                         ? 2
+    //                                         : 1;
     double total = (widget.price *
         ((checkoutDate
                 .difference(checkinDate.isBefore(checkoutDate)
@@ -360,53 +455,39 @@ class _BookingReviewState extends State<BookingReview> {
                           style: TextStyle(
                               fontSize: 18, fontWeight: FontWeight.w600),
                         ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Username',
-                              style: TextStyle(
-                                  fontSize: 18, color: Colors.grey.shade900),
-                            ),
-                            line1 == ''
-                                ? Container()
-                                : Text(
-                                    line1,
+                        const SizedBox(
+                          height: 20,
+                        ),
+                        addressOfUser.isEmpty
+                            ? Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [Text('No Address Added')],
+                              )
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    addressOfUser['address'],
                                     style: TextStyle(
                                         fontSize: 18,
                                         color: Colors.grey.shade900),
                                   ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                city == ''
-                                    ? Container()
-                                    : Text(
-                                        city,
-                                        style: TextStyle(
-                                            fontSize: 18,
-                                            color: Colors.grey.shade900),
-                                      ),
-                                state == ''
-                                    ? Container()
-                                    : Text(
-                                        state,
-                                        style: TextStyle(
-                                            fontSize: 18,
-                                            color: Colors.grey.shade900),
-                                      ),
-                              ],
-                            ),
-                            contact == ''
-                                ? Container()
-                                : Text(
-                                    contact,
+                                  Text(
+                                    addressOfUser['city'] +
+                                        ' ${addressOfUser['postcode']}',
                                     style: TextStyle(
                                         fontSize: 18,
                                         color: Colors.grey.shade900),
                                   ),
-                          ],
-                        )
+                                  Text(
+                                    addressOfUser['country'],
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        color: Colors.grey.shade900),
+                                  ),
+                                ],
+                              )
                       ],
                     ),
                     Column(
@@ -415,25 +496,76 @@ class _BookingReviewState extends State<BookingReview> {
                       children: [
                         TextButton(
                             onPressed: () {
-                              showAddressDialog(context);
+                              addressOfUser.isEmpty
+                                  ? showAddressDialog(context)
+                                  : null;
                             },
-                            child: Text('Add')),
+                            child: Text(
+                              'Add',
+                              style: TextStyle(
+                                  color: addressOfUser.isEmpty
+                                      ? Colors.blue
+                                      : Colors.grey.shade500),
+                            )),
                         TextButton(
                             onPressed: () {
-                              showAddressDialog(context).then((_) {
-                                setState(() {
-                                  line1 = _addressController.text;
-                                  city = _cityController.text;
-                                  state = _stateController.text;
-                                  contact = _contactController.text;
-                                });
-                              });
+                              addressOfUser.isEmpty
+                                  ? null
+                                  : showAddressDialog(context);
                             },
-                            child: Text('Edit')),
+                            child: Text(
+                              'Edit',
+                              style: TextStyle(
+                                  color: addressOfUser.isNotEmpty
+                                      ? Colors.blue
+                                      : Colors.grey.shade500),
+                            )),
                       ],
                     )
                   ],
                 ),
+              ),
+              Container(
+                width: MediaQuery.of(context).size.width,
+                padding: EdgeInsets.all(5),
+                decoration: BoxDecoration(color: Colors.white, boxShadow: [
+                  BoxShadow(color: Colors.grey.shade200, blurRadius: 10)
+                ]),
+                child: Row(
+                  children: [
+                    Container(
+                      alignment: Alignment.centerLeft,
+                      width: (MediaQuery.of(context).size.width - 50) * 0.5,
+                      child: RadioListTile(
+                          activeColor: Theme.of(context).buttonColor,
+                          title: Text('COD'),
+                          value: 1,
+                          groupValue: val,
+                          onChanged: (value) {
+                            setState(() {
+                              val = int.parse('$value').toInt();
+                            });
+                          }),
+                    ),
+                    Container(
+                      alignment: Alignment.centerRight,
+                      width: (MediaQuery.of(context).size.width - 50) * 0.5,
+                      child: RadioListTile(
+                          activeColor: Theme.of(context).buttonColor,
+                          title: Text('Card'),
+                          value: 2,
+                          groupValue: val,
+                          onChanged: (value) {
+                            setState(() {
+                              val = int.parse('$value').toInt();
+                            });
+                          }),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(
+                height: 20,
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -488,19 +620,6 @@ class _BookingReviewState extends State<BookingReview> {
                           ))
                 ],
               ),
-              Divider(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Total Amount',
-                      style: GoogleFonts.robotoCondensed(
-                          fontSize: 25, fontWeight: FontWeight.w600)),
-                  Text(
-                      '${total - (_isCouponApplied ? total * 10 / 100 : 0.00)}',
-                      style: GoogleFonts.robotoCondensed(
-                          fontSize: 25, fontWeight: FontWeight.w600)),
-                ],
-              ),
               SizedBox(
                 height: 40,
               ),
@@ -518,27 +637,60 @@ class _BookingReviewState extends State<BookingReview> {
                 padding: MaterialStateProperty.all(
                     EdgeInsets.symmetric(vertical: 15))),
             onPressed: () async {
-              var paymentResponse =
-                  await FlutterStripePayment.createPaymentIntent(
-                      (total - (_isCouponApplied ? total * 10 / 100 : 0.00)),
-                      'INR',
-                      'Joginder',
-                      '$line1, $city, $state',
-                      postal,
-                      contact,
-                      country);
-              await initPaymentSheet(paymentResponse);
-              await Stripe.instance.presentPaymentSheet();
-              await getTransactionResponse(context, paymentResponse)
-                  .then((value) {
-                if (value) {
-                  createOrder(total, true);
-                }
+              setState(() {
+                loading = true;
               });
+              if (addressOfUser.isEmpty) {
+                CustomToast.showToast('Please add your address to continue');
+                setState(() {
+                  loading = false;
+                });
+              } else if (val == 1) {
+                createOrder(total, true);
+              } else {
+                try {
+                  var paymentResponse =
+                      await FlutterStripePayment.createPaymentIntent(
+                          (total -
+                              (_isCouponApplied ? total * 10 / 100 : 0.00)),
+                          'INR',
+                          'Joginder',
+                          '$line1, $city, $state',
+                          postal,
+                          contact,
+                          country);
+                  await initPaymentSheet(paymentResponse);
+                  await Stripe.instance.presentPaymentSheet();
+                  await getTransactionResponse(context, paymentResponse)
+                      .then((value) {
+                    if (value) {
+                      createOrder(total, true);
+                    }
+                  });
+                } catch (e) {
+                  print('error :: ${e}');
+                  if (!mounted) {
+                    return;
+                  }
+                  setState(() {
+                    loading = false;
+                  });
+                }
+              }
             },
-            child: Text('CONFIRM AND PAY',
-                style: GoogleFonts.robotoCondensed(
-                    fontSize: 20, fontWeight: FontWeight.w500))),
+            child: loading
+                ? Container(
+                    height: 21,
+                    width: 21,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      backgroundColor: Colors.transparent,
+                    ),
+                  )
+                : Text(
+                    'CONFIRM AND PAY (\$${total - (_isCouponApplied ? total * 10 / 100 : 0.00)})',
+                    style: GoogleFonts.robotoCondensed(
+                        fontSize: 20, fontWeight: FontWeight.w500))),
       ),
     );
   }
@@ -572,40 +724,55 @@ class _BookingReviewState extends State<BookingReview> {
                 const SizedBox(
                   height: 10,
                 ),
-                buildtextField('State', _stateController),
-                const SizedBox(
-                  height: 10,
-                ),
                 buildtextField('PostalCode', _postalController),
                 const SizedBox(
                   height: 10,
                 ),
                 buildtextField('Country', _countryController),
                 const SizedBox(
-                  height: 10,
-                ),
-                buildtextField('Phone', _contactController),
-                const SizedBox(
                   height: 20,
                 ),
-                OutlinedButton(
-                    onPressed: () {
-                      setState(() {
-                        TextEditingController().clear();
-                      });
-                    },
-                    child: Text(
-                      'CANCEL',
-                      style: TextStyle(fontSize: 18),
-                    )),
-                ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: Text(
-                      'SAVE',
-                      style: TextStyle(fontSize: 18),
-                    ))
+                loading
+                    ? Center(
+                        child: CircularProgressIndicator(
+                            color: Theme.of(context).buttonColor,
+                            backgroundColor: Colors.transparent),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          OutlinedButton(
+                              style: ButtonStyle(
+                                  fixedSize:
+                                      MaterialStateProperty.all(Size(110, 40))),
+                              onPressed: () {
+                                setState(() {
+                                  TextEditingController().clear();
+                                });
+                              },
+                              child: Text(
+                                'CANCEL',
+                                style: TextStyle(fontSize: 18),
+                              )),
+                          ElevatedButton(
+                              style: ButtonStyle(
+                                  fixedSize:
+                                      MaterialStateProperty.all(Size(110, 40))),
+                              onPressed: () {
+                                setState(() {
+                                  loading = true;
+                                });
+
+                                addressOfUser.isEmpty
+                                    ? addUserAddress()
+                                    : updateAddress();
+                              },
+                              child: Text(
+                                'SAVE',
+                                style: TextStyle(fontSize: 18),
+                              ))
+                        ],
+                      )
               ],
             ));
   }
@@ -703,11 +870,15 @@ class _BookingReviewState extends State<BookingReview> {
   loadBookingHistory() async {
     try {
       await HttpWrapper.sendGetRequest(url: GET_HOTEL_BOOKING).then((value) {
+        print('Data Fatched :: $value');
         setState(() {
           Provider.of<HotelDataProvider>(context, listen: false).hotelBookings =
               (value['bookings'] as List)
                   .map((e) => HotelBookingHistoryModel.fromJson(e))
                   .toList();
+          Navigator.of(context).pushNamedAndRemoveUntil(
+              BookingHistoryDetails.bookingHistoryRoute, (route) => false,
+              arguments: id);
         });
       });
     } catch (e) {
@@ -726,8 +897,10 @@ class _BookingReviewState extends State<BookingReview> {
       'roomtype': widget.roomType,
       'quantity': rooms.toString(),
       'adults': adults.toString(),
+      'roomsCharge': widget.price.toString(),
       'paymentStatus': status.toString(),
       'children': children.toString(),
+      'txnId': transactionId.toString(),
       'discount': (_isCouponApplied ? total * 10 / 100 : 0.00).toString(),
       'charges':
           (total - (_isCouponApplied ? total * 10 / 100 : 0.00)).toString(),
@@ -738,10 +911,8 @@ class _BookingReviewState extends State<BookingReview> {
           .then((value) {
         print('New Booking :: $value');
         CustomToast.showToast(value['message']);
+        id = value['booking']['_id'];
         loadBookingHistory();
-        Navigator.of(context).pushNamedAndRemoveUntil(
-            BookingHistoryDetails.bookingHistoryRoute, (route) => false,
-            arguments: value['booking']['_id']);
       });
     } catch (e) {
       print(e);

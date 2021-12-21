@@ -44,32 +44,31 @@ class _HotelBookingHistoryState extends State<HotelBookingHistory> {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        foregroundColor: Colors.black,
-        backgroundColor: Colors.grey.shade100,
+        foregroundColor: Colors.white,
         centerTitle: true,
         title: Text('BOOKING HISTORY'),
       ),
-      body: Padding(
+      body: Container(
+        width: MediaQuery.of(context).size.width,
+        height: MediaQuery.of(context).size.height - 100,
         padding: EdgeInsets.all(10),
-        child: Column(
-          children: [
-            ListView.builder(
-                itemCount: hotelBookings.length,
-                shrinkWrap: true,
-                scrollDirection: Axis.vertical,
-                itemBuilder: (ctx, i) => HotelHistoryTile(
-                      bookingId: hotelBookings[i].bookingId,
-                      hotelName: hotelBookings[i].name,
-                      city: 'Hisar',
-                      rooms: hotelBookings[i].totalRooms,
-                      price: hotelBookings[i].roomCharge,
-                      adults: hotelBookings[i].adults,
-                      kids: hotelBookings[i].kids,
-                      checkin: hotelBookings[i].checkin,
-                      checkout: hotelBookings[i].checkout,
-                    ))
-          ],
-        ),
+        child: ListView.builder(
+            itemCount: hotelBookings.length,
+            shrinkWrap: true,
+            scrollDirection: Axis.vertical,
+            itemBuilder: (ctx, i) => HotelHistoryTile(
+                  txnId: hotelBookings[i].txnId,
+                  roomsCharge: hotelBookings[i].roomCharge,
+                  bookingId: hotelBookings[i].bookingId,
+                  hotelName: hotelBookings[i].name,
+                  city: 'Hisar',
+                  rooms: hotelBookings[i].totalRooms,
+                  price: hotelBookings[i].roomCharge,
+                  adults: hotelBookings[i].adults,
+                  kids: hotelBookings[i].kids,
+                  checkin: hotelBookings[i].checkin,
+                  checkout: hotelBookings[i].checkout,
+                )),
       ),
     );
   }

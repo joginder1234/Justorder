@@ -44,7 +44,7 @@ class _RestaurantExploreState extends State<RestaurantExplore> {
       child: Scaffold(
         body: restaurantsList == null || restaurantsList.isEmpty
             ? Center(
-                child: CircularProgressIndicator(),
+                child: Text('No Restaurant found in database'),
               )
             : Stack(children: [
                 SizedBox(
@@ -54,6 +54,7 @@ class _RestaurantExploreState extends State<RestaurantExplore> {
                     child: Column(
                       children: [
                         Container(
+                            // height:  0.7,
                             padding: EdgeInsets.all(10),
                             child: TextField(
                               controller: _searchController,

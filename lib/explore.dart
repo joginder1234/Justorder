@@ -43,13 +43,22 @@ class _ExploreState extends State<Explore> {
 
   loadCartItems() async {
     var response = await FunctionsProvider.loadCartItems();
+    if (!mounted) {
+      return;
+    }
     setState(() {
       _cartItems = response;
     });
   }
 
   getHotelsList() async {
+    setState(() {
+      loading = true;
+    });
     var response = await FunctionsProvider.getHotelsList();
+    if (!mounted) {
+      return;
+    }
     setState(() {
       Provider.of<HotelDataProvider>(context, listen: false).hotelData =
           response.map((e) => Hotel.fromJson(e)).toList();
@@ -60,6 +69,9 @@ class _ExploreState extends State<Explore> {
   getRestaurants() async {
     var response = await FunctionsProvider.getRestaurants();
     var data = response.map((e) => Restaurant.fromJson(e)).toList();
+    if (!mounted) {
+      return;
+    }
     setState(() {
       Provider.of<ResaurantsDataProvider>(context, listen: false)
           .allRestaurants = data;
@@ -126,7 +138,7 @@ class _ExploreState extends State<Explore> {
                 )
               ],
               bottom: TabBar(
-                  indicatorColor: Colors.white,
+                  indicatorColor: Colors.yellow.shade600,
                   indicatorWeight: 3,
                   labelColor: Colors.white,
                   labelStyle:

@@ -9,9 +9,11 @@ import 'package:justorderuser/modals/rooms_details.dart';
 class HotelDataProvider with ChangeNotifier {
   Map<String, dynamic> userAddressProvider = {};
 
+  double hotelPrice = 0.0;
+
   List<Hotel> hotelData = [];
 
-  List<RoomsData> roomsList = [];
+  List roomsList = [];
 
   List reviewsList = [];
 

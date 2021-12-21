@@ -2,18 +2,15 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:justorderuser/backend/common/http_wrapper.dart';
-import 'package:justorderuser/backend/providers/source_provider.dart';
 import 'package:justorderuser/backend/urls/urls.dart';
 import 'package:justorderuser/common/custom_toast.dart';
-import 'package:justorderuser/modals/rest_menu.dart';
 import 'package:justorderuser/modals/restaurant_details.dart';
-import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ResaurantsDataProvider with ChangeNotifier {
   List<Restaurant> allRestaurants = [];
 
   List<Map<String, dynamic>> myOrders = [];
+  List foodOptions = [];
 
   List restReviews = [];
 
@@ -157,7 +154,9 @@ class Quantity with ChangeNotifier {
 
   Quantity() {
     HttpWrapper.sendGetRequest(url: GET_CART_ITEM).then((cart) {
-      this.orderQuantity = (cart['carts'][0]['cartItems'] as List).length;
+      this.orderQuantity = (cart['carts'] as List).isEmpty
+          ? 0
+          : (cart['carts'][0]['cartItems'] as List).length;
       notifyListeners();
     });
   }

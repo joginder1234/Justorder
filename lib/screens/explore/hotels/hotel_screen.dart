@@ -56,10 +56,20 @@ class _HotelsExploreState extends State<HotelsExplore> {
   }
 
   removeFavourite(String id) async {
+    print('Hotel Id :: $id');
+    var fvtId = '';
     try {
-      await HttpWrapper.sendDeleteRequest(url: REMOVE_FVT + '/$id')
+      await HttpWrapper.sendGetRequest(url: FVT_LIST).then((value) {
+        (value['favourites'] as List).forEach((element) {
+          if (element['hotelId'] == id) {
+            fvtId = element['_id'];
+          }
+        });
+      });
+      await HttpWrapper.sendDeleteRequest(url: REMOVE_FVT + '/$fvtId')
           .then((value) {
-        print(value);
+        // getFavouriteList();
+        print('Fvrt remove Response :: $value');
       });
     } catch (e) {
       CustomToast.showToast(e.toString());
@@ -83,7 +93,7 @@ class _HotelsExploreState extends State<HotelsExplore> {
         backgroundColor: Colors.white,
         body: hotelDetails == null || hotelDetails.isEmpty
             ? Center(
-                child: CircularProgressIndicator(),
+                child: Text('No Hotel found in database'),
               )
             : Stack(children: [
                 SizedBox(
@@ -123,7 +133,6 @@ class _HotelsExploreState extends State<HotelsExplore> {
                                   hotelDetails[index].id,
                                   hotelDetails[index].hotelDetail.hotelImage,
                                   hotelDetails[index].hotelDetail.hotelName,
-                                  160,
                                   hotelDetails[index].hotelDetail.hotelAddress,
                                   hotelDetails[index].services.rating + 0.0,
                                   () {
@@ -140,7 +149,7 @@ class _HotelsExploreState extends State<HotelsExplore> {
                     ? Container()
                     : Container(
                         margin: EdgeInsets.only(top: 65, right: 15, left: 15),
-                        padding: EdgeInsets.fromLTRB(15, 0, 15, 15),
+                        padding: EdgeInsets.fromLTRB(1, 0, 15, 15),
                         decoration:
                             BoxDecoration(color: Colors.white, boxShadow: [
                           BoxShadow(color: Colors.grey.shade500, blurRadius: 3)

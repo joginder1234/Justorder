@@ -42,6 +42,8 @@ dependencies:
   flutter_elegant_number_button: ^0.0.6
   badges: ^2.0.1
   flutter_stripe: ^2.0.2
+  image_picker: ^0.8.4+4
+  url_launcher: ^6.0.17
 
 dev_dependencies:
   flutter_test:
@@ -65,6 +67,9 @@ flutter:
     - assets/113.jpg
     - assets/order.gif
     - assets/submit.gif
+    - assets/bg.jpg
+    - assets/priceLoad.gif
+    - assets/shimmer_load.gif
   #   - images/a_dot_ham.jpeg
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.

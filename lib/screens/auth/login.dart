@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:justorderuser/backend/common/http_wrapper.dart';
 import 'package:justorderuser/backend/providers/auth_provider.dart';
+import 'package:justorderuser/backend/urls/urls.dart';
+import 'package:justorderuser/common/custom_toast.dart';
+import 'package:justorderuser/screens/auth/forgot_password.dart';
 import 'package:justorderuser/screens/auth/signup.dart';
 import 'package:justorderuser/screens/base_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -84,11 +88,26 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Widget _buildResetEmailTF() {
+    return TextFormField(
+      decoration: InputDecoration(
+          filled: true,
+          fillColor: Colors.grey.shade300,
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide.none),
+          hintText: 'user@email.com'),
+    );
+  }
+
   Widget _buildForgotPasswordBtn() {
     return Container(
       alignment: Alignment.centerRight,
       child: FlatButton(
-        onPressed: () => print('Forgot Password Button Pressed'),
+        onPressed: () {
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => ForgotPassword()));
+        },
         padding: EdgeInsets.only(right: 0.0),
         child: Text(
           'Forgot Password?',
@@ -114,6 +133,32 @@ class _LoginScreenState extends State<LoginScreen> {
           'LOGIN',
           style: TextStyle(
             color: Color(0xFF527DAA),
+            letterSpacing: 1.5,
+            fontSize: 18.0,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'OpenSans',
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSendEmailBtn() {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 25.0),
+      width: double.infinity,
+      child: RaisedButton(
+        elevation: 5.0,
+        onPressed: () {},
+        padding: EdgeInsets.all(15.0),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(5),
+        ),
+        color: Color(0xFF527DAA),
+        child: Text(
+          'SEND',
+          style: TextStyle(
+            color: Colors.white,
             letterSpacing: 1.5,
             fontSize: 18.0,
             fontWeight: FontWeight.bold,
@@ -302,6 +347,20 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  sendPassresetLink(String email) async {
+    Map<String, dynamic> emailBody = {
+      'email': email,
+    };
+    try {
+      var linkResponse = await HttpWrapper.sendPostRequest(
+          url: SEND_PASSRESET, body: emailBody);
+
+      print('Mail Response :: $linkResponse');
+    } catch (e) {
+      CustomToast.showToast(e.toString());
     }
   }
 

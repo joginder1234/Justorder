@@ -16,6 +16,7 @@ import 'package:justorderuser/screens/explore/hotels/reviews_screen.dart';
 import 'package:justorderuser/widgets/features.dart' as feature;
 import 'package:justorderuser/widgets/review_tile.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HotelDetailsScreen extends StatefulWidget {
   const HotelDetailsScreen({Key? key}) : super(key: key);
@@ -27,20 +28,56 @@ class HotelDetailsScreen extends StatefulWidget {
 
 class _HotelDetailsState extends State<HotelDetailsScreen> {
   bool _isFavorite = false;
+  bool _hasCallSupport = false;
+  String? phoneNumber;
+
+  Future<void> _makePhoneCall(String phoneNumber) async {
+    final Uri launchUri = Uri(
+      scheme: 'tel',
+      path: phoneNumber,
+    );
+    await launch(launchUri.toString());
+  }
+
+  Future<void> _writeEmail(String emailaddress) async {
+    final Uri launchUri = Uri(scheme: 'mailto', path: emailaddress);
+    await launch(launchUri.toString());
+  }
+
   @override
   Widget build(BuildContext context) {
+    final hotelDataRef = Provider.of<HotelDataProvider>(context);
+
+    final hotelPrice = hotelDataRef.hotelPrice;
     final hotelId = ModalRoute.of(context)!.settings.arguments as String;
-    final hotelDetailsData = Provider.of<HotelDataProvider>(context)
-        .hotelData
-        .firstWhere((element) => element.id == hotelId);
+    final hotelDetailsData =
+        hotelDataRef.hotelData.firstWhere((element) => element.id == hotelId);
+    phoneNumber = hotelDetailsData.hotelDetail.phone;
     final reviewsData = Provider.of<HotelDataProvider>(context).reviewsList;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
           statusBarIconBrightness: Brightness.light,
-          statusBarColor: Colors.transparent),
+          statusBarColor: Colors.black26),
       child: Scaffold(
           backgroundColor: Colors.white,
+          bottomNavigationBar: Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: ElevatedButton(
+                style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all(
+                        Theme.of(context).buttonColor)),
+                onPressed: () {
+                  getRoomsList(hotelDetailsData.id);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  child: Text(
+                    'Select Room',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                )),
+          ),
           body: CustomScrollView(
             slivers: [
               SliverAppBar(
@@ -110,7 +147,7 @@ class _HotelDetailsState extends State<HotelDetailsScreen> {
                                 ],
                               ),
                             ),
-                            roomPerNIghtWidget()
+                            roomPerNIghtWidget(hotelPrice)
                           ],
                         ),
                       ),
@@ -141,98 +178,129 @@ class _HotelDetailsState extends State<HotelDetailsScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Location Detail',
-                                style: GoogleFonts.robotoCondensed(
-                                    color: Color(0XFF0F2C67),
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700)),
+                            ListTile(
+                              leading: Icon(Icons.home,
+                                  size: 20,
+                                  color: Theme.of(context).buttonColor),
+                              title: Wrap(
+                                children: [
+                                  hotelDetailsData
+                                          .hotelDetail.hotelAddress.isNotEmpty
+                                      ? Text(
+                                          hotelDetailsData
+                                                  .hotelDetail.hotelAddress +
+                                              ', ',
+                                          style: GoogleFonts.robotoCondensed(
+                                              fontSize: 18,
+                                              color: Colors.grey.shade800),
+                                        )
+                                      : SizedBox(),
+                                  hotelDetailsData.hotelDetail.region.isNotEmpty
+                                      ? Text(
+                                          hotelDetailsData.hotelDetail.region +
+                                              ', ',
+                                          style: GoogleFonts.robotoCondensed(
+                                              fontSize: 18,
+                                              color: Colors.grey.shade800),
+                                        )
+                                      : SizedBox(),
+                                  hotelDetailsData.hotelDetail.city.isNotEmpty
+                                      ? Text(
+                                          hotelDetailsData.hotelDetail.city +
+                                              ', ',
+                                          style: GoogleFonts.robotoCondensed(
+                                              fontSize: 18,
+                                              color: Colors.grey.shade800),
+                                        )
+                                      : SizedBox(),
+                                  hotelDetailsData
+                                          .hotelDetail.country.isNotEmpty
+                                      ? Text(
+                                          hotelDetailsData.hotelDetail.country,
+                                          style: GoogleFonts.robotoCondensed(
+                                              fontSize: 18,
+                                              color: Colors.grey.shade800),
+                                        )
+                                      : SizedBox(),
+                                ],
+                              ),
+                            ),
                             SizedBox(
-                              height: 10,
+                              width: MediaQuery.of(context).size.width,
+                              child: Row(
+                                children: [
+                                  hotelDetailsData.ownerDetail.email.isNotEmpty
+                                      ? SizedBox(
+                                          width: (MediaQuery.of(context)
+                                                      .size
+                                                      .width -
+                                                  50) *
+                                              0.5,
+                                          child: ListTile(
+                                            onTap: () {
+                                              hotelDetailsData.ownerDetail.email
+                                                      .isNotEmpty
+                                                  ? _writeEmail(
+                                                      hotelDetailsData
+                                                          .ownerDetail.email,
+                                                    )
+                                                  : null;
+                                            },
+                                            tileColor: Colors.orange,
+                                            leading: Icon(
+                                              Icons.email,
+                                              size: 20,
+                                              color: Colors.white,
+                                            ),
+                                            title: Text(
+                                                hotelDetailsData
+                                                    .ownerDetail.email,
+                                                style:
+                                                    GoogleFonts.robotoCondensed(
+                                                        fontSize: 18,
+                                                        color: Colors.white)),
+                                          ),
+                                        )
+                                      : SizedBox(),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  hotelDetailsData.hotelDetail.phone.isNotEmpty
+                                      ? SizedBox(
+                                          width: (MediaQuery.of(context)
+                                                      .size
+                                                      .width -
+                                                  50) *
+                                              0.5,
+                                          child: ListTile(
+                                            tileColor: Colors.lightGreen,
+                                            onTap: () {
+                                              setState(() {
+                                                hotelDetailsData.hotelDetail
+                                                        .phone.isNotEmpty
+                                                    ? _makePhoneCall(
+                                                        'tel:${hotelDetailsData.hotelDetail.phone}')
+                                                    : null;
+                                              });
+                                            },
+                                            leading: Icon(
+                                              Icons.phone,
+                                              size: 20,
+                                              color: Colors.white,
+                                            ),
+                                            title: Text(
+                                                hotelDetailsData
+                                                    .hotelDetail.phone,
+                                                style:
+                                                    GoogleFonts.robotoCondensed(
+                                                        fontSize: 18,
+                                                        color: Colors.white)),
+                                          ),
+                                        )
+                                      : SizedBox(),
+                                ],
+                              ),
                             ),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(Icons.home, size: 20, color: Colors.grey),
-                                SizedBox(
-                                  width: 10,
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      hotelDetailsData.hotelDetail.hotelAddress,
-                                      style: GoogleFonts.robotoCondensed(
-                                          fontSize: 18,
-                                          color: Colors.grey.shade800),
-                                    ),
-                                    Text(
-                                      '${hotelDetailsData.hotelDetail.city}, ${hotelDetailsData.hotelDetail.region}',
-                                      style: GoogleFonts.robotoCondensed(
-                                          fontSize: 18,
-                                          color: Colors.grey.shade800),
-                                    ),
-                                    Text(
-                                      hotelDetailsData.hotelDetail.country,
-                                      style: GoogleFonts.robotoCondensed(
-                                          fontSize: 18,
-                                          color: Colors.grey.shade800),
-                                    ),
-                                  ],
-                                )
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.phone,
-                                  size: 20,
-                                  color: Colors.grey,
-                                ),
-                                SizedBox(
-                                  width: 10,
-                                ),
-                                Text(hotelDetailsData.hotelDetail.phone,
-                                    style: GoogleFonts.robotoCondensed(
-                                        fontSize: 18,
-                                        color: Colors.grey.shade800))
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.email,
-                                  size: 20,
-                                  color: Colors.grey,
-                                ),
-                                SizedBox(
-                                  width: 10,
-                                ),
-                                Text(hotelDetailsData.ownerDetail.email,
-                                    style: GoogleFonts.robotoCondensed(
-                                        fontSize: 18,
-                                        color: Colors.grey.shade800))
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(
-                        width: double.infinity,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                                onPressed: () {
-                                  getRoomsList(hotelDetailsData.id);
-                                  Navigator.of(context).pushNamed(
-                                      HotelRooms.hotelRoomRoute,
-                                      arguments: hotelDetailsData.id);
-                                },
-                                child: Text(
-                                  'View Rooms',
-                                  style: GoogleFonts.robotoCondensed(
-                                      fontSize: 20, color: Color(0XFF0F2C67)),
-                                ))
                           ],
                         ),
                       ),
@@ -261,7 +329,7 @@ class _HotelDetailsState extends State<HotelDetailsScreen> {
     );
   }
 
-  Column roomPerNIghtWidget() {
+  Column roomPerNIghtWidget(double price) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -270,7 +338,7 @@ class _HotelDetailsState extends State<HotelDetailsScreen> {
           style: GoogleFonts.robotoCondensed(color: Colors.grey),
         ),
         Text(
-          '\$ 160',
+          '\$ $price',
           style: GoogleFonts.robotoCondensed(
               color: Color(0XFF0F2C67),
               fontSize: 25,
@@ -373,10 +441,12 @@ class _HotelDetailsState extends State<HotelDetailsScreen> {
   //// Getting List of related hotel
   getRoomsList(String hotelId) async {
     var response = await FunctionsProvider.getRoomsList(hotelId);
-    log('Room Data :: $response');
+
     setState(() {
-      Provider.of<HotelDataProvider>(context, listen: false)
-          .setRoomsData(RoomsData.fromJson(response));
+      Provider.of<HotelDataProvider>(context, listen: false).roomsList =
+          response;
     });
+    Navigator.of(context)
+        .pushNamed(HotelRooms.hotelRoomRoute, arguments: hotelId);
   }
 }

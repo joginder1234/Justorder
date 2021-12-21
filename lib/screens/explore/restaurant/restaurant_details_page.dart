@@ -79,23 +79,23 @@ class _RestaurantDetailsPageState extends State<RestaurantDetailsPage> {
                                         ),
                                   Row(
                                     children: [
-                                      restaurantDetails.city == null ||
-                                              restaurantDetails.city ==
-                                                  'null' ||
-                                              restaurantDetails.city == ''
-                                          ? Container()
-                                          : Text(
-                                              '${restaurantDetails.city}. ',
-                                              style: const TextStyle(
-                                                  color: Colors.grey),
-                                            ),
                                       restaurantDetails.region == '' ||
                                               restaurantDetails.region ==
                                                   'null' ||
                                               restaurantDetails.region == null
                                           ? Container()
                                           : Text(
-                                              '${restaurantDetails.region}',
+                                              '${restaurantDetails.region}, ',
+                                              style: const TextStyle(
+                                                  color: Colors.grey),
+                                            ),
+                                      restaurantDetails.city == null ||
+                                              restaurantDetails.city ==
+                                                  'null' ||
+                                              restaurantDetails.city == ''
+                                          ? Container()
+                                          : Text(
+                                              '${restaurantDetails.city}',
                                               style: const TextStyle(
                                                   color: Colors.grey),
                                             ),
@@ -185,7 +185,9 @@ class _RestaurantDetailsPageState extends State<RestaurantDetailsPage> {
                                 children: [
                                   restaurantActivityTile('Active Hour',
                                       '7 am - 6 pm', Colors.black),
-                                  restaurantActivityTile('Phone', '8901111444',
+                                  restaurantActivityTile(
+                                      'Phone',
+                                      '8901111444', //Need to add restaurant Phone number
                                       Theme.of(context).buttonColor),
                                   restaurantActivityTile(
                                       'Email',

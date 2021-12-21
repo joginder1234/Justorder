@@ -76,6 +76,7 @@ class _TripsState extends State<Trips> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         foregroundColor: Colors.white,
         title: Text('My Favourites'),
       ),
@@ -89,7 +90,7 @@ class _TripsState extends State<Trips> {
           : hotelDetails.isEmpty
               ? Center(
                   child: Text(
-                    'You have marked any favourite.\nPlease add some items here...',
+                    'You haven\'t marked any favourite.\nPlease add some items here...',
                     style: TextStyle(fontSize: 20, color: Colors.grey.shade600),
                     textAlign: TextAlign.center,
                   ),
@@ -112,7 +113,6 @@ class _TripsState extends State<Trips> {
                           hotelDetails[index].id,
                           hotelDetails[index].hotelDetail.hotelImage,
                           hotelDetails[index].hotelDetail.hotelName,
-                          160,
                           hotelDetails[index].hotelDetail.hotelAddress,
                           hotelDetails[index].services.rating + 0.0, () {
                         removeFavourite(hotelDetails[index].id);

@@ -31,10 +31,12 @@ class _OtherServicesState extends State<OtherServices> {
     var response = await ServiceProvider.otherServiceList();
     if (response['success'] == true) {
       services = (response['items'] as List).map((e) => e).toList();
-      setState(() {
-        serviceId = services[0]['_id'];
-        selectedService = services[0]['name'];
-      });
+      if (mounted) {
+        setState(() {
+          serviceId = services[0]['_id'];
+          selectedService = services[0]['name'];
+        });
+      }
       loadOtherService(services[0]['_id']);
     }
   }

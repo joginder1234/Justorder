@@ -21,8 +21,8 @@ class HotelReviewsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        foregroundColor: Colors.black,
-        title: Text('Reviews', style: TextStyle(color: Colors.black)),
+        foregroundColor: Colors.white,
+        title: Text('Reviews'),
       ),
       body: Padding(
         padding: EdgeInsets.all(20),
