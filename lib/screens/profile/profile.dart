@@ -76,12 +76,6 @@ class _ProfileState extends State<Profile> {
                   context, MaterialPageRoute(builder: (_) => ChangePassword())),
             ),
             ListTile(title: Text("Help Center"), trailing: Icon(Icons.info)),
-            // ListTile(
-            //   title: Text("Payments"),
-            //   trailing: Icon(Icons.payment),
-            //   onTap: () => Navigator.push(
-            //       context, MaterialPageRoute(builder: (_) => Payments())),
-            // ),
             ListTile(
                 title: Text("Settings"),
                 trailing: Icon(Icons.settings),

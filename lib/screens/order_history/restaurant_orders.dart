@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:justorderuser/backend/common/http_wrapper.dart';
@@ -18,7 +20,14 @@ class _RestaurantOrdersState extends State<RestaurantOrders> {
   getOrderList() async {
     try {
       await HttpWrapper.sendGetRequest(url: REST_ORDER_LIST).then((orders) {
-        Map<String, dynamic> orderData = {};
+        if (orders['success'] == true) {
+          setState(() {
+            Provider.of<ResaurantsDataProvider>(context, listen: false)
+                .myOrders = orders['orders'];
+          });
+        }
+
+        log(orders.toString());
       });
     } catch (e) {
       print(e);
@@ -31,9 +40,12 @@ class _RestaurantOrdersState extends State<RestaurantOrders> {
     getOrderList();
   }
 
+  List<String> orderId = [];
+
   @override
   Widget build(BuildContext context) {
     var allOrders = Provider.of<ResaurantsDataProvider>(context).myOrders;
+    var restList = Provider.of<ResaurantsDataProvider>(context).allRestaurants;
     print('My Orders :: $allOrders');
     return WillPopScope(
       onWillPop: () async {
@@ -55,9 +67,43 @@ class _RestaurantOrdersState extends State<RestaurantOrders> {
                 return Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: ExpansionTile(
+                      backgroundColor: Colors.white,
+                      onExpansionChanged: (value) {
+                        if (value) {
+                          setState(() {
+                            orderId.add(allOrders[index]['_id']);
+                          });
+                        } else {
+                          setState(() {
+                            orderId.removeWhere((element) =>
+                                element == allOrders[index]['_id']);
+                          });
+                        }
+                        print(orderId);
+                      },
                       collapsedBackgroundColor: Colors.white,
+                      leading: Container(
+                        width: 55,
+                        height: 55,
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(5)),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(5),
+                          child: Image.network(
+                            restList
+                                .firstWhere((element) =>
+                                    element.id ==
+                                    allOrders[index]['restaurantId'])
+                                .image,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
                       title: Text(
-                        allOrders[index]['restaurantName'],
+                        restList
+                            .firstWhere((element) =>
+                                element.id == allOrders[index]['restaurantId'])
+                            .restaurantName,
                         style: TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold),
                       ),
@@ -65,20 +111,24 @@ class _RestaurantOrdersState extends State<RestaurantOrders> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'On : ${allOrders[index]['orderTime']}',
+                            'On : ${DateFormat('yMMMd').format(DateTime.parse(allOrders[index]['orderDate']))} / ${allOrders[index]['orderTime']}',
                             style: TextStyle(color: Colors.grey),
                           ),
                           const SizedBox(
                             height: 10,
                           ),
-                          Text(
-                            'Preparing',
-                            style: TextStyle(color: Colors.green, fontSize: 16),
-                          ),
+                          orderId.any((element) => element
+                                  .contains(allOrders[index]['_id'].toString()))
+                              ? SizedBox()
+                              : Text(
+                                  allOrders[index]['status'],
+                                  style: TextStyle(
+                                      color: Colors.green, fontSize: 16),
+                                ),
                         ],
                       ),
                       trailing: Text(
-                        '\$${allOrders[index]['price']}',
+                        '\$${allOrders[index]['totalPrice']}',
                         style: TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold),
                       ),
@@ -87,13 +137,19 @@ class _RestaurantOrdersState extends State<RestaurantOrders> {
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Image(
-                              image: AssetImage('assets/order.gif'),
-                              width: MediaQuery.of(context).size.width * 0.7,
+                              image: allOrders[index]['status'] == 'preparing'
+                                  ? AssetImage('assets/order.gif')
+                                  : allOrders[index]['status'] == 'on_delivery'
+                                      ? AssetImage('assets/deliveryboy.gif')
+                                      : AssetImage('assets/order.gif'),
+                              width: MediaQuery.of(context).size.width * 0.6,
                             ),
                             Text(
-                              'Preparing Your Order',
+                              allOrders[index]['status'] == 'preparing'
+                                  ? 'Preparing Your Order'
+                                  : 'Out for delivery',
                               style: TextStyle(
-                                  fontSize: 30,
+                                  fontSize: 25,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.orange),
                             ),
@@ -115,9 +171,9 @@ class _RestaurantOrdersState extends State<RestaurantOrders> {
                               children: [
                                 ListView.builder(
                                     physics: NeverScrollableScrollPhysics(),
-                                    itemCount:
-                                        (allOrders[index]['cartItems'] as List)
-                                            .length,
+                                    itemCount: (allOrders[index]['cart'][0]
+                                            ['cartItems'] as List)
+                                        .length,
                                     shrinkWrap: true,
                                     itemBuilder: (ctx, i) => ListTile(
                                           leading: Container(
@@ -128,7 +184,8 @@ class _RestaurantOrdersState extends State<RestaurantOrders> {
                                                 shape: BoxShape.circle,
                                                 color: Colors.orange),
                                             child: Text(
-                                                (allOrders[index]['cartItems']
+                                                (allOrders[index]['cart'][0]
+                                                            ['cartItems']
                                                         as List)[i]['quantity']
                                                     .toString(),
                                                 style: TextStyle(
@@ -137,11 +194,12 @@ class _RestaurantOrdersState extends State<RestaurantOrders> {
                                                         FontWeight.bold)),
                                           ),
                                           title: Text(
-                                            (allOrders[index]['cartItems']
-                                                as List)[i]['name'],
+                                            (allOrders[index]['cart'][0]
+                                                    ['cartItems'] as List)[i]
+                                                ['name'],
                                           ),
                                           trailing: Text(
-                                              '\$${(allOrders[index]['cartItems'] as List)[i]['price'].toString()}',
+                                              '\$${(allOrders[index]['cart'][0]['cartItems'] as List)[i]['price'].toString()}',
                                               style: TextStyle(
                                                   fontWeight: FontWeight.bold)),
                                         ))
@@ -155,8 +213,7 @@ class _RestaurantOrdersState extends State<RestaurantOrders> {
                                     subtitle: Text('by Card')),
                                 ListTile(
                                   title: Text('Order Time'),
-                                  trailing:
-                                      Text(TimeOfDay.now().format(context)),
+                                  trailing: Text(allOrders[index]['orderTime']),
                                 ),
                                 ListTile(
                                   title: Text('Payment Details'),
@@ -171,7 +228,7 @@ class _RestaurantOrdersState extends State<RestaurantOrders> {
                                 ListTile(
                                   title: Text(allOrders[index]['userId']),
                                   subtitle: Text(
-                                      '${allOrders[index]['line1']}\n${allOrders[index]['city']}, ${allOrders[index]['state']}\n${allOrders[index]['phone']}'),
+                                      '${allOrders[index]['shipping_address']['line1']}\n${allOrders[index]['shipping_address']['city']}, ${allOrders[index]['shipping_address']['state']}\n${allOrders[index]['shipping_address']['phone']}'),
                                 )
                               ],
                             ),

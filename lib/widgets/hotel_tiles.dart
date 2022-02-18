@@ -129,15 +129,13 @@ class _HotelTilesState extends State<HotelTiles> {
       },
       child: Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        elevation: 1,
+        elevation: 5,
         child: Stack(
           children: [
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  height: 130,
-                  width: double.infinity,
+                Expanded(
                   child: ClipRRect(
                       borderRadius: BorderRadius.only(
                           topLeft: Radius.circular(15),
@@ -152,19 +150,7 @@ class _HotelTilesState extends State<HotelTiles> {
                                       image: ImageProvider,
                                       fit: BoxFit.cover))),
                         ),
-                      )
-
-                      //  widget.hotelImage != null &&
-                      //         widget.hotelImage.isNotEmpty
-                      //     ? Hero(
-                      //         tag: widget.hotelId,
-                      //         child: Image(
-                      //           image: NetworkImage(widget.hotelImage),
-                      //           fit: BoxFit.cover,
-                      //         ),
-                      //       )
-                      //     : Placeholder(),
-                      ),
+                      )),
                 ),
                 Container(
                   height: 110,
@@ -181,11 +167,6 @@ class _HotelTilesState extends State<HotelTiles> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          // FaIcon(
-                          //   FontAwesomeIcons.dollarSign,
-                          //   size: 25,
-                          //   color: Colors.grey,
-                          // ),
                           loadingPrice
                               ? Image(
                                   image: AssetImage('assets/priceLoad.gif'),

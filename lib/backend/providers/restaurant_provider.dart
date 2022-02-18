@@ -9,7 +9,7 @@ import 'package:justorderuser/modals/restaurant_details.dart';
 class ResaurantsDataProvider with ChangeNotifier {
   List<Restaurant> allRestaurants = [];
 
-  List<Map<String, dynamic>> myOrders = [];
+  List myOrders = [];
   List foodOptions = [];
 
   List restReviews = [];
